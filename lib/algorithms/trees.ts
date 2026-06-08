@@ -92,93 +92,91 @@ export function isValidBSTSequence(values: number[]): { valid: boolean; message:
     return { valid: true, message: "Valid single-node BST" };
   }
 
-  // Insert values one by one and check BST property
-  const tree: (TreeNode | null)[] = [];
+  // Build a proper BST by inserting values one by one
+  const bstValues = buildBSTFromSequence(values);
   
-  for (let i = 0; i < values.length; i++) {
-    const tempNodes = createBSTFromValues(values.slice(0, i + 1));
-    
-    // Check if BST property is maintained
-    if (!checkBSTProperty(tempNodes)) {
-      return { 
-        valid: false, 
-        message: `Values don't maintain BST property. Left child must be < parent < right child.` 
-      };
-    }
+  // Check if resulting BST maintains property for ALL subtrees
+  if (!isBSTValid(bstValues, 0, -Infinity, Infinity)) {
+    return { 
+      valid: false, 
+      message: `Invalid BST sequence. For each node: all left subtree values < node < all right subtree values.` 
+    };
   }
 
   return { valid: true, message: "Valid BST sequence" };
 }
 
-// Create BST from values by inserting in order
-function createBSTFromValues(values: number[]): TreeNode[] {
-  if (values.length === 0) return [];
+// Build a BST by inserting values in the given order
+function buildBSTFromSequence(values: number[]): BSTNode[] {
+  const nodes: BSTNode[] = [];
   
-  const nodes: TreeNode[] = [];
-  const nodeMap = new Map<number, TreeNode>();
-  
-  for (const val of values) {
-    const node: TreeNode = {
-      id: nodes.length,
-      value: val,
-      x: 0,
-      y: 0,
-      children: [],
-      state: "default"
+  for (const value of values) {
+    const newNode: BSTNode = {
+      value,
+      left: -1,
+      right: -1,
+      index: nodes.length
     };
-    nodes.push(node);
-    nodeMap.set(val, node);
+    nodes.push(newNode);
   }
 
-  // Build tree structure (simulate BST insertion order)
-  for (let i = 0; i < nodes.length; i++) {
-    for (let j = i + 1; j < nodes.length; j++) {
-      const parent = nodes[i];
-      const child = nodes[j];
-      
-      // Determine if child should be left or right
-      if (child.value < parent.value) {
-        if (!parent.children.includes(child.id)) {
-          parent.children.push(child.id);
-        }
-      } else {
-        if (!parent.children.includes(child.id)) {
-          parent.children.push(child.id);
-        }
-      }
-    }
+  // Now insert each value into BST structure
+  for (let i = 1; i < values.length; i++) {
+    insertIntoBST(nodes, 0, i);
   }
 
   return nodes;
 }
 
-// Check if tree maintains BST property
-function checkBSTProperty(nodes: TreeNode[]): boolean {
-  const checkNode = (nodeId: number, min: number, max: number): boolean => {
-    if (nodeId >= nodes.length) return true;
-    
-    const node = nodes[nodeId];
-    if (node.value <= min || node.value >= max) {
-      return false;
-    }
-    
-    for (const childId of node.children) {
-      if (childId < nodes.length) {
-        const child = nodes[childId];
-        const isLeftChild = child.value < node.value;
-        
-        if (isLeftChild) {
-          if (!checkNode(childId, min, node.value)) return false;
-        } else {
-          if (!checkNode(childId, node.value, max)) return false;
-        }
+// Insert value at insertIdx into BST rooted at rootIdx
+function insertIntoBST(nodes: BSTNode[], rootIdx: number, insertIdx: number): void {
+  const insertValue = nodes[insertIdx].value;
+  let current = rootIdx;
+
+  while (true) {
+    if (insertValue < nodes[current].value) {
+      // Go left
+      if (nodes[current].left === -1) {
+        nodes[current].left = insertIdx;
+        return;
+      } else {
+        current = nodes[current].left;
+      }
+    } else {
+      // Go right
+      if (nodes[current].right === -1) {
+        nodes[current].right = insertIdx;
+        return;
+      } else {
+        current = nodes[current].right;
       }
     }
-    
-    return true;
-  };
+  }
+}
 
-  return checkNode(0, -Infinity, Infinity);
+// Check if BST maintains property for each subtree
+function isBSTValid(nodes: BSTNode[], nodeIdx: number, min: number, max: number): boolean {
+  if (nodeIdx === -1) return true;
+
+  const node = nodes[nodeIdx];
+
+  // Check current node is within bounds
+  if (node.value <= min || node.value >= max) {
+    return false;
+  }
+
+  // Recursively check left and right subtrees
+  return (
+    isBSTValid(nodes, node.left, min, node.value) &&
+    isBSTValid(nodes, node.right, node.value, max)
+  );
+}
+
+interface BSTNode {
+  value: number;
+  left: number;  // index or -1
+  right: number; // index or -1
+  index: number;
 }
 
 function getChildrenIds(nodeId: number, totalNodes: number): number[] {
