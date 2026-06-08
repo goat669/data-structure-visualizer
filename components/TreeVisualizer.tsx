@@ -177,6 +177,7 @@ export default function TreeVisualizer({ algoId }: TreeVisualizerProps) {
 
       {/* Editor */}
       <TreeEditor
+        algoId={algoId}
         onRunAlgorithm={(customVals) => {
           setCustomValues(customVals);
           const s = runTreeAlgo(algoId, customVals.length, customVals);
