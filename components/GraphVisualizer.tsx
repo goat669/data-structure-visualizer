@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ALGORITHMS, GraphNode, GraphEdge, GraphStep } from "@/lib/algorithms/types";
-import { bfsSteps, dfsSteps, dijkstraSteps, topoSortSteps, primSteps, makeDefaultGraph, makeDAG, layoutNodes } from "@/lib/algorithms/graph";
+import { bfsSteps, dfsSteps, dijkstraSteps, bellmanFordSteps, topoSortSteps, primSteps, makeDefaultGraph, makeDAG, layoutNodes } from "@/lib/algorithms/graph";
 import AlgoInfoPanel from "./AlgoInfoPanel";
 import PlaybackControls from "./PlaybackControls";
 import GraphEditor, { GraphConfig } from "./GraphEditor";
@@ -30,12 +30,13 @@ const SPEED_MAP: Record<number, number> = { 1: 800, 2: 400, 3: 200, 4: 80, 5: 25
 function buildSteps(algoId: string, cfg: GraphConfig): GraphStep[] {
   const { nodes, edges, startNode } = cfg;
   switch (algoId) {
-    case "bfs":      return bfsSteps(nodes, edges, startNode);
-    case "dfs":      return dfsSteps(nodes, edges, startNode);
-    case "dijkstra": return dijkstraSteps(nodes, edges, startNode);
-    case "topo":     return topoSortSteps(nodes, edges);
-    case "prim":     return primSteps(nodes, edges, startNode);
-    default:         return bfsSteps(nodes, edges, startNode);
+    case "bfs":           return bfsSteps(nodes, edges, startNode);
+    case "dfs":           return dfsSteps(nodes, edges, startNode);
+    case "dijkstra":      return dijkstraSteps(nodes, edges, startNode);
+    case "bellman-ford":  return bellmanFordSteps(nodes, edges, startNode);
+    case "topo":          return topoSortSteps(nodes, edges);
+    case "prim":          return primSteps(nodes, edges, startNode);
+    default:              return bfsSteps(nodes, edges, startNode);
   }
 }
 

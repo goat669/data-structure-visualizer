@@ -3,7 +3,7 @@ import { TreeNode, TreeStep } from "./types";
 export function runTreeAlgo(algoId: string, nodeCount: number = 7, customValues?: number[]): TreeStep[] {
   const steps: TreeStep[] = [];
   const valuesToUse = customValues && customValues.length > 0 ? customValues : undefined;
-  const tree = createSampleBinaryTree(Math.min(9, Math.max(1, nodeCount)), valuesToUse);
+  const tree = createSampleBinaryTree(Math.min(31, Math.max(1, nodeCount)), valuesToUse);
 
   if (algoId === "tree-bfs") {
     return simulateBFS(tree, steps);

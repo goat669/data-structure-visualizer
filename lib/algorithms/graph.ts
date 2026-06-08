@@ -242,6 +242,77 @@ export function dijkstraSteps(
   return steps;
 }
 
+// ─── Bellman-Ford ────────────────────────────────────────────────────────────
+
+export function bellmanFordSteps(
+  customNodes?: GraphNode[],
+  customEdges?: GraphEdge[],
+  src = 0,
+): GraphStep[] {
+  const base = customNodes && customEdges
+    ? { nodes: customNodes.map(n => ({ ...n, state: "default" as const })), edges: customEdges.map(e => ({ ...e, state: "default" as const })) }
+    : makeDefaultGraph();
+  const { nodes, edges } = base;
+  if (src >= nodes.length) src = 0;
+
+  const steps: GraphStep[] = [];
+  const n = nodes.length;
+  const dist = Array(n).fill(Infinity);
+  dist[src] = 0;
+  
+  steps.push(snap(nodes, edges, `Init Bellman-Ford from ${nodes[src].label}. dist[${nodes[src].label}]=0`, `dist: [${dist.map((d, i) => `${nodes[i].label}:${d === Infinity ? "∞" : d}`).join(" ")}]`));
+
+  // Relax all edges V-1 times
+  for (let iter = 0; iter < n - 1; iter++) {
+    let anyRelaxed = false;
+    steps.push(snap(nodes, edges, `Iteration ${iter + 1}: Relaxing all edges`, `dist: [${dist.map((d, i) => `${nodes[i].label}:${d === Infinity ? "∞" : d}`).join(" ")}]`));
+    
+    for (let u = 0; u < n; u++) {
+      if (dist[u] === Infinity) continue;
+      nodes[u].state = "current";
+      
+      for (const { id: v, edgeIdx, weight } of getNeighbours(edges, u)) {
+        edges[edgeIdx].state = "active";
+        const newDist = dist[u] + weight;
+        
+        if (newDist < dist[v]) {
+          dist[v] = newDist;
+          nodes[v].state = "queued";
+          edges[edgeIdx].state = "path";
+          anyRelaxed = true;
+          steps.push(snap(nodes, edges, `Relax edge ${nodes[u].label}→${nodes[v].label}: dist[${nodes[v].label}]=${newDist}`, `dist: [${dist.map((d, i) => `${nodes[i].label}:${d === Infinity ? "∞" : d}`).join(" ")}]`));
+        } else {
+          edges[edgeIdx].state = "rejected";
+        }
+      }
+      nodes[u].state = "visited";
+    }
+    
+    if (!anyRelaxed) break;
+  }
+
+  // Check for negative cycles
+  let negCycleFound = false;
+  for (let u = 0; u < n; u++) {
+    if (dist[u] === Infinity) continue;
+    for (const { id: v, edgeIdx, weight } of getNeighbours(edges, u)) {
+      if (dist[u] + weight < dist[v]) {
+        nodes[v].state = "unbalanced";
+        edges[edgeIdx].state = "rejected";
+        negCycleFound = true;
+      }
+    }
+  }
+
+  if (negCycleFound) {
+    steps.push(snap(nodes, edges, "⚠ Negative cycle detected!", `Cannot find shortest paths with negative cycles`));
+  } else {
+    steps.push(snap(nodes, edges, "Bellman-Ford complete — shortest paths found", `dist: [${dist.map((d, i) => `${nodes[i].label}:${d === Infinity ? "∞" : d}`).join(" ")}]`));
+  }
+  
+  return steps;
+}
+
 // ─── Topological Sort ────────────────────────────────────────────────────────
 
 export function topoSortSteps(

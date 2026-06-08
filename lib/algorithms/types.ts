@@ -376,6 +376,45 @@ void topologicalSort(vector<vector<int>>& adj, int V) {
   }
 }`,
   },
+  {
+    id: "bellman-ford",
+    name: "Bellman-Ford",
+    category: "graph",
+    description:
+      "Finds the shortest path from a source node to all other nodes in a weighted graph. Handles negative edge weights and detects negative cycles. Uses relaxation of all edges V-1 times. Slower than Dijkstra but more versatile.",
+    timeComplexity: { best: "O(VE)", average: "O(VE)", worst: "O(VE)" },
+    spaceComplexity: "O(V)",
+    cppCode: `bool bellmanFord(vector<vector<pair<int,int>>>& adj,
+                    int V, int src) {
+  vector<int> dist(V, INT_MAX);
+  dist[src] = 0;
+  
+  // Relax all edges V-1 times
+  for (int i = 0; i < V - 1; i++) {
+    for (int u = 0; u < V; u++) {
+      if (dist[u] != INT_MAX) {
+        for (auto [w, v] : adj[u]) {
+          if (dist[u] + w < dist[v]) {
+            dist[v] = dist[u] + w;
+          }
+        }
+      }
+    }
+  }
+  
+  // Check for negative cycle
+  for (int u = 0; u < V; u++) {
+    if (dist[u] != INT_MAX) {
+      for (auto [w, v] : adj[u]) {
+        if (dist[u] + w < dist[v]) {
+          return false; // Negative cycle found
+        }
+      }
+    }
+  }
+  return true;
+}`,
+  },
   // ── Stack / Queue ──────────────────────────────────────────────────────────
   {
     id: "stack-ops",
