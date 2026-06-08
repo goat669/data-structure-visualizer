@@ -29,7 +29,8 @@ function createSampleBinaryTree(count: number, customValues?: number[]): TreeNod
   if (customValues && customValues.length > 0) {
     nodeValues = customValues.slice(0, Math.max(1, count));
   } else {
-    nodeValues = [4, 2, 6, 1, 3, 5, 7, 8, 9].slice(0, Math.max(1, count));
+    // Generate random BST-ordered values
+    nodeValues = generateRandomBST(Math.max(1, count));
   }
 
   const maxDepth = Math.ceil(Math.log2(nodeValues.length + 1));
@@ -60,6 +61,124 @@ function createSampleBinaryTree(count: number, customValues?: number[]): TreeNod
   }
 
   return nodes;
+}
+
+// Generate a balanced BST with sorted values
+function generateRandomBST(count: number): number[] {
+  const values = Array.from({ length: count }, () => Math.floor(Math.random() * 100) + 1);
+  values.sort((a, b) => a - b);
+  
+  // Create balanced BST by inserting in sorted order
+  const result: number[] = [];
+  const inorder = (arr: number[], left: number, right: number) => {
+    if (left > right) return;
+    const mid = Math.floor((left + right) / 2);
+    inorder(arr, left, mid - 1);
+    result.push(arr[mid]);
+    inorder(arr, mid + 1, right);
+  };
+  
+  inorder(values, 0, values.length - 1);
+  return result;
+}
+
+// Validate if values form a valid BST when inserted in order
+export function isValidBSTSequence(values: number[]): { valid: boolean; message: string } {
+  if (values.length === 0) {
+    return { valid: false, message: "Please enter at least one value" };
+  }
+  
+  if (values.length === 1) {
+    return { valid: true, message: "Valid single-node BST" };
+  }
+
+  // Insert values one by one and check BST property
+  const tree: (TreeNode | null)[] = [];
+  
+  for (let i = 0; i < values.length; i++) {
+    const tempNodes = createBSTFromValues(values.slice(0, i + 1));
+    
+    // Check if BST property is maintained
+    if (!checkBSTProperty(tempNodes)) {
+      return { 
+        valid: false, 
+        message: `Values don't maintain BST property. Left child must be < parent < right child.` 
+      };
+    }
+  }
+
+  return { valid: true, message: "Valid BST sequence" };
+}
+
+// Create BST from values by inserting in order
+function createBSTFromValues(values: number[]): TreeNode[] {
+  if (values.length === 0) return [];
+  
+  const nodes: TreeNode[] = [];
+  const nodeMap = new Map<number, TreeNode>();
+  
+  for (const val of values) {
+    const node: TreeNode = {
+      id: nodes.length,
+      value: val,
+      x: 0,
+      y: 0,
+      children: [],
+      state: "default"
+    };
+    nodes.push(node);
+    nodeMap.set(val, node);
+  }
+
+  // Build tree structure (simulate BST insertion order)
+  for (let i = 0; i < nodes.length; i++) {
+    for (let j = i + 1; j < nodes.length; j++) {
+      const parent = nodes[i];
+      const child = nodes[j];
+      
+      // Determine if child should be left or right
+      if (child.value < parent.value) {
+        if (!parent.children.includes(child.id)) {
+          parent.children.push(child.id);
+        }
+      } else {
+        if (!parent.children.includes(child.id)) {
+          parent.children.push(child.id);
+        }
+      }
+    }
+  }
+
+  return nodes;
+}
+
+// Check if tree maintains BST property
+function checkBSTProperty(nodes: TreeNode[]): boolean {
+  const checkNode = (nodeId: number, min: number, max: number): boolean => {
+    if (nodeId >= nodes.length) return true;
+    
+    const node = nodes[nodeId];
+    if (node.value <= min || node.value >= max) {
+      return false;
+    }
+    
+    for (const childId of node.children) {
+      if (childId < nodes.length) {
+        const child = nodes[childId];
+        const isLeftChild = child.value < node.value;
+        
+        if (isLeftChild) {
+          if (!checkNode(childId, min, node.value)) return false;
+        } else {
+          if (!checkNode(childId, node.value, max)) return false;
+        }
+      }
+    }
+    
+    return true;
+  };
+
+  return checkNode(0, -Infinity, Infinity);
 }
 
 function getChildrenIds(nodeId: number, totalNodes: number): number[] {

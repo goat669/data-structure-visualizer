@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { isValidBSTSequence } from "@/lib/algorithms/trees";
 
 interface TreeEditorProps {
   onRunAlgorithm: (customValues: number[]) => void;
@@ -40,6 +41,14 @@ export default function TreeEditor({
         setError("Maximum 31 nodes allowed");
         return;
       }
+      
+      // Validate BST property
+      const validation = isValidBSTSequence(nums);
+      if (!validation.valid) {
+        setError(validation.message);
+        return;
+      }
+      
       onRunAlgorithm(nums);
     }
   };

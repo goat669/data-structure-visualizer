@@ -224,31 +224,39 @@ export default function LinkedListVisualizer({
       ctx.lineWidth = 2.5;
       ctx.beginPath();
       
-      // Start from right side of last node
-      ctx.moveTo(lastNode.x + nodeRadius + 5, lastNode.y);
+      // Start from bottom right of last node
+      ctx.moveTo(lastNode.x + nodeRadius + 5, lastNode.y + 5);
       
-      // Curve down and around to approach head from below
-      const curveBottomY = Math.max(lastNode.y, firstNode.y) + 100;
-      const controlX1 = lastNode.x + 60;
-      const controlX2 = firstNode.x - 60;
+      // Create smooth curve going down then back to head
+      const bottomY = lastNode.y + 80;
+      const controlX1 = lastNode.x + 100;
+      const controlX2 = firstNode.x - 100;
+      
+      // Bezier curve: starts at tail, goes down and curves around to head from below
+      ctx.bezierCurveTo(
+        controlX1, lastNode.y + 30,  // First control point (right side, slight down)
+        controlX1, bottomY,            // Second control point (right side, at bottom)
+        (lastNode.x + firstNode.x) / 2, bottomY  // Middle point at bottom
+      );
       
       ctx.bezierCurveTo(
-        controlX1, lastNode.y + 40,
-        controlX2, curveBottomY - 40,
-        firstNode.x, firstNode.y + nodeRadius + 15
+        controlX2, bottomY,            // Control point (left side, at bottom)
+        controlX2, firstNode.y + 30,  // Control point (left side, moving up)
+        firstNode.x, firstNode.y + nodeRadius + 12  // End point at head bottom
       );
+      
       ctx.stroke();
 
-      // Arrow head pointing up into HEAD node
+      // Arrow head pointing upward into HEAD node
       const endX = firstNode.x;
-      const endY = firstNode.y + nodeRadius + 15;
-      const angle = -Math.PI / 2; // pointing upward
+      const endY = firstNode.y + nodeRadius + 12;
+      const arrowSize = 10;
       
       ctx.fillStyle = "#10b981";
       ctx.beginPath();
       ctx.moveTo(endX, endY);
-      ctx.lineTo(endX - 10 * Math.cos(angle - Math.PI / 6), endY - 10 * Math.sin(angle - Math.PI / 6));
-      ctx.lineTo(endX - 10 * Math.cos(angle + Math.PI / 6), endY - 10 * Math.sin(angle + Math.PI / 6));
+      ctx.lineTo(endX - arrowSize * 0.866, endY - arrowSize * 0.5);  // Left point
+      ctx.lineTo(endX + arrowSize * 0.866, endY - arrowSize * 0.5);  // Right point
       ctx.closePath();
       ctx.fill();
     }
