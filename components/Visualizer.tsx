@@ -53,8 +53,9 @@ export default function Visualizer({ algoId }: VisualizerProps) {
   const algo = ALGORITHMS.find((a) => a.id === algoId)!;
   const isSearching = algo.category === "searching";
 
+  const [mounted, setMounted] = useState(false);
   const [arraySize, setArraySize] = useState(20);
-  const [baseArray, setBaseArray] = useState<number[]>(() => generateRandomArray(20));
+  const [baseArray, setBaseArray] = useState<number[]>([]);
   const [searchTarget, setSearchTarget] = useState<number>(0);
 
   const [steps, setSteps] = useState<SortStep[]>([]);
@@ -77,7 +78,22 @@ export default function Visualizer({ algoId }: VisualizerProps) {
     [algoId]
   );
 
+  // Initialize array only on the client to avoid SSR/client hydration mismatch
   useEffect(() => {
+    const arr = generateRandomArray(20);
+    const target = arr[Math.floor(arr.length / 2)] ?? 0;
+    setBaseArray(arr);
+    setSearchTarget(target);
+    setMounted(true);
+    const s = runAlgo(algoId, arr, target);
+    setSteps(s);
+    setCurrentStep(0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Recompute when algo changes (after mount)
+  useEffect(() => {
+    if (!mounted || baseArray.length === 0) return;
     const target = baseArray[Math.floor(baseArray.length / 2)] ?? 0;
     setSearchTarget(target);
     recompute(baseArray, target);
@@ -173,9 +189,23 @@ export default function Visualizer({ algoId }: VisualizerProps) {
   useEffect(() => () => stopPlayback(), []);
 
   const currentData = steps[currentStep];
-  const bars: ArrayBar[] = currentData?.array ?? baseArray.map((v) => ({ value: v, state: "default" }));
+  const bars: ArrayBar[] = currentData?.array ?? baseArray.map((v) => ({ value: v, state: "default" as const }));
   const maxValue = Math.max(...bars.map((b) => b.value), 1);
   const isFinished = currentStep >= steps.length - 1;
+
+  // Render a stable skeleton on the server / before hydration
+  if (!mounted) {
+    return (
+      <div className="flex flex-col gap-4 animate-pulse">
+        <div className="h-12 bg-card border border-border rounded-lg" />
+        <div className="h-20 bg-card border border-border rounded-lg" />
+        <div className="h-72 bg-card border border-border rounded-lg" />
+        <div className="h-32 bg-card border border-border rounded-lg" />
+        <div className="h-24 bg-card border border-border rounded-lg" />
+        <div className="h-40 bg-card border border-border rounded-lg" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-4">
