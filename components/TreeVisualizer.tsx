@@ -28,10 +28,10 @@ export default function TreeVisualizer({ algoId }: TreeVisualizerProps) {
 
   const recompute = useCallback(() => {
     stopPlayback();
-    const s = runTreeAlgo(algoId, nodeCount);
+    const s = runTreeAlgo(algoId, nodeCount, customValues || undefined);
     setSteps(s);
     setCurrentStep(0);
-  }, [algoId, nodeCount]);
+  }, [algoId, nodeCount, customValues]);
 
   const stopPlayback = () => {
     setIsPlaying(false);
@@ -140,9 +140,12 @@ export default function TreeVisualizer({ algoId }: TreeVisualizerProps) {
 
       {/* Editor */}
       <TreeEditor
-        nodeCount={nodeCount}
-        onNodeCountChange={setNodeCount}
-        onRunAlgorithm={recompute}
+        onRunAlgorithm={(customVals) => {
+          setCustomValues(customVals);
+          const s = runTreeAlgo(algoId, customVals.length, customVals);
+          setSteps(s);
+          setCurrentStep(0);
+        }}
       />
     </div>
   );

@@ -3,17 +3,21 @@
 import { useState } from "react";
 
 interface TreeEditorProps {
-  nodeCount: number;
-  onNodeCountChange: (count: number) => void;
-  onRunAlgorithm: () => void;
+  onRunAlgorithm: (customValues: number[]) => void;
 }
 
 export default function TreeEditor({
-  nodeCount,
-  onNodeCountChange,
   onRunAlgorithm,
 }: TreeEditorProps) {
   const [values, setValues] = useState("1,2,3,4,5,6,7");
+
+  const handleRun = () => {
+    const nums = values
+      .split(",")
+      .map((v) => parseInt(v.trim()))
+      .filter((v) => !isNaN(v));
+    onRunAlgorithm(nums);
+  };
 
   return (
     <div className="bg-card border border-border rounded-lg p-4 space-y-3">
@@ -40,7 +44,7 @@ export default function TreeEditor({
 
       {/* Run button */}
       <button
-        onClick={onRunAlgorithm}
+        onClick={handleRun}
         className="w-full px-4 py-2 bg-primary text-primary-foreground rounded text-sm font-mono hover:bg-primary/90 transition-colors"
       >
         Run Algorithm

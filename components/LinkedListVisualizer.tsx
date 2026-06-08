@@ -33,13 +33,22 @@ export default function LinkedListVisualizer({
   const [position, setPosition] = useState(2);
   const [insertValue, setInsertValue] = useState(20);
   const [searchValue, setSearchValue] = useState(15);
+  const [customValues, setCustomValues] = useState<string>("10,20,30,40,50,60,70");
+  const [useCustom, setUseCustom] = useState(false);
 
-  // Generate initial random values
+  // Generate initial random values or parse custom values
   const generateValues = useCallback((): number[] => {
+    if (useCustom && customValues.trim()) {
+      return customValues
+        .split(",")
+        .map((v) => parseInt(v.trim()))
+        .filter((v) => !isNaN(v))
+        .slice(0, 20);
+    }
     return Array.from({ length: listSize }, () =>
       Math.floor(Math.random() * 100) + 1
     );
-  }, [listSize]);
+  }, [listSize, useCustom, customValues]);
 
   // Run algorithm
   const runAlgorithm = useCallback(() => {
@@ -244,6 +253,47 @@ export default function LinkedListVisualizer({
         <h3 className="text-sm font-mono font-bold uppercase text-foreground">
           {llType.toUpperCase()} - {operation.toUpperCase()}
         </h3>
+
+        {/* Node Builder */}
+        <div className="border-b border-border pb-4">
+          <div className="flex gap-2 mb-3">
+            <button
+              onClick={() => setUseCustom(false)}
+              className={`px-3 py-1 text-xs font-mono rounded ${
+                !useCustom
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-background border border-border text-foreground"
+              }`}
+            >
+              Random
+            </button>
+            <button
+              onClick={() => setUseCustom(true)}
+              className={`px-3 py-1 text-xs font-mono rounded ${
+                useCustom
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-background border border-border text-foreground"
+              }`}
+            >
+              Custom Values
+            </button>
+          </div>
+          {useCustom && (
+            <div>
+              <label className="text-xs font-mono text-muted-foreground">Nodes (comma-separated)</label>
+              <input
+                type="text"
+                value={customValues}
+                onChange={(e) => setCustomValues(e.target.value)}
+                placeholder="10,20,30,40,50"
+                className="w-full px-2 py-1 bg-background border border-border rounded text-sm font-mono mt-1"
+              />
+              <div className="text-xs text-muted-foreground mt-1">
+                {customValues.split(",").filter(v => v.trim()).length} node(s)
+              </div>
+            </div>
+          )}
+        </div>
 
         <div className="grid grid-cols-2 gap-3">
           <div>
