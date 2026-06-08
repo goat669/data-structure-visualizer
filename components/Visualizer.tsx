@@ -235,8 +235,10 @@ export default function Visualizer({ algoId }: VisualizerProps) {
             {bars.length} elements
           </span>
         </div>
-        <div style={{ height: "280px" }}>
-          <VisualizerBars bars={bars} maxValue={maxValue} showValues={bars.length <= 40} />
+        <div
+          style={{ height: "300px", background: "#0a0a0a", border: "1px solid #1a1a1a", borderRadius: "6px", padding: "12px 8px 8px" }}
+        >
+          <VisualizerBars bars={bars} maxValue={maxValue} isPlaying={isPlaying} />
         </div>
       </div>
 
@@ -249,6 +251,8 @@ export default function Visualizer({ algoId }: VisualizerProps) {
           totalSteps={steps.length}
           description={currentData?.description ?? ""}
           isSearching={isSearching}
+          isPlaying={isPlaying}
+          isFinished={isFinished}
         />
       </div>
 
@@ -272,11 +276,6 @@ export default function Visualizer({ algoId }: VisualizerProps) {
 
       {/* Array generator */}
       <div className="bg-card border border-border rounded-lg p-4">
-        <div className="flex items-center gap-2 mb-3">
-          <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest">
-            Array Generator
-          </span>
-        </div>
         <ArrayGenerator
           arraySize={arraySize}
           onSizeChange={handleSizeChange}

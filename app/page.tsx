@@ -13,18 +13,20 @@ export default function HomePage() {
       {/* Mobile overlay */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/60 z-20 md:hidden"
+          className="fixed inset-0 bg-black/70 z-20 md:hidden"
           onClick={() => setSidebarOpen(false)}
+          aria-hidden
         />
       )}
 
       {/* Sidebar */}
       <div
-        className={`
-          fixed inset-y-0 left-0 z-30 md:static md:block md:z-auto
-          transform transition-transform duration-200
-          ${sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
-        `}
+        className={[
+          "fixed inset-y-0 left-0 z-30",
+          "md:static md:block md:z-auto",
+          "transform transition-transform duration-200 ease-in-out",
+          sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0",
+        ].join(" ")}
       >
         <Sidebar
           selectedAlgo={selectedAlgo}
@@ -36,25 +38,31 @@ export default function HomePage() {
       </div>
 
       {/* Main content */}
-      <main className="flex-1 overflow-y-auto min-w-0">
-        {/* Mobile header */}
-        <div className="md:hidden flex items-center gap-3 px-4 py-3 border-b border-border bg-sidebar sticky top-0 z-10">
+      <main className="flex-1 overflow-y-auto min-w-0 flex flex-col">
+        {/* Mobile top bar */}
+        <header className="md:hidden flex items-center gap-3 px-4 py-3 border-b border-border sticky top-0 z-10" style={{ background: "oklch(0.115 0 0)" }}>
           <button
             onClick={() => setSidebarOpen(true)}
-            className="p-1.5 rounded-md hover:bg-secondary transition-colors"
-            aria-label="Open menu"
+            className="p-1.5 rounded transition-colors hover:bg-secondary"
+            aria-label="Open algorithm menu"
           >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
-              <rect y="3" width="16" height="1.5" rx="0.75" fill="currentColor" />
-              <rect y="7.25" width="16" height="1.5" rx="0.75" fill="currentColor" />
-              <rect y="11.5" width="16" height="1.5" rx="0.75" fill="currentColor" />
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden>
+              <rect y="2.5"  width="16" height="1.5" rx="0.75" />
+              <rect y="7.25" width="16" height="1.5" rx="0.75" />
+              <rect y="12"   width="12" height="1.5" rx="0.75" />
             </svg>
           </button>
           <span className="text-sm font-mono font-bold text-foreground">DSA Visualizer</span>
-        </div>
+        </header>
 
-        <div className="p-5 max-w-5xl">
-          <Visualizer key={selectedAlgo} algoId={selectedAlgo} />
+        {/* Visualizer card */}
+        <div className="flex-1 p-4 md:p-6 flex flex-col">
+          <div
+            className="w-full max-w-4xl mx-auto rounded-lg overflow-hidden flex flex-col"
+            style={{ border: "1px solid oklch(1 0 0 / 7%)" }}
+          >
+            <Visualizer key={selectedAlgo} algoId={selectedAlgo} />
+          </div>
         </div>
       </main>
     </div>
