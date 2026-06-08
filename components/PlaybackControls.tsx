@@ -57,7 +57,10 @@ export default function PlaybackControls({
           max={Math.max(0, totalSteps - 1)}
           step={1}
           value={[currentStep]}
-          onValueChange={([v]) => onSliderChange(v)}
+          onValueChange={(vals) => {
+            const v = Array.isArray(vals) ? vals[0] : vals;
+            onSliderChange(v);
+          }}
           className="flex-1"
           aria-label="Seek to step"
         />

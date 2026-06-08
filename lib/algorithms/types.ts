@@ -521,31 +521,6 @@ Node* insertAtPos(Node* head, int val, int pos) {
 }`,
   },
   {
-    id: "sll-delete",
-    name: "Singly LL - Delete",
-    category: "linked-list",
-    description: "Delete a node from a singly linked list.",
-    timeComplexity: { best: "O(1)", average: "O(n)", worst: "O(n)" },
-    spaceComplexity: "O(1)",
-    cppCode: `Node* deleteAtPos(Node* head, int pos) {
-  if (pos == 0 && head) {
-    Node* temp = head;
-    head = head->next;
-    delete temp;
-    return head;
-  }
-  Node* curr = head;
-  for (int i = 0; i < pos - 1 && curr; i++)
-    curr = curr->next;
-  if (curr && curr->next) {
-    Node* temp = curr->next;
-    curr->next = temp->next;
-    delete temp;
-  }
-  return head;
-}`,
-  },
-  {
     id: "dll-insert",
     name: "Doubly LL - Insert",
     category: "linked-list",
@@ -574,33 +549,6 @@ DNode* insertAtPos(DNode* head, int val, int pos) {
     newNode->prev = curr;
     if (curr->next) curr->next->prev = newNode;
     curr->next = newNode;
-  }
-  return head;
-}`,
-  },
-  {
-    id: "dll-delete",
-    name: "Doubly LL - Delete",
-    category: "linked-list",
-    description: "Delete a node from a doubly linked list.",
-    timeComplexity: { best: "O(1)", average: "O(n)", worst: "O(n)" },
-    spaceComplexity: "O(1)",
-    cppCode: `DNode* deleteAtPos(DNode* head, int pos) {
-  if (pos == 0 && head) {
-    DNode* temp = head;
-    head = head->next;
-    if (head) head->prev = nullptr;
-    delete temp;
-    return head;
-  }
-  DNode* curr = head;
-  for (int i = 0; i < pos - 1 && curr; i++)
-    curr = curr->next;
-  if (curr && curr->next) {
-    DNode* temp = curr->next;
-    curr->next = temp->next;
-    if (temp->next) temp->next->prev = curr;
-    delete temp;
   }
   return head;
 }`,
@@ -635,37 +583,6 @@ DNode* insertAtPos(DNode* head, int val, int pos) {
   return head;
 }`,
   },
-  {
-    id: "cll-delete",
-    name: "Circular LL - Delete",
-    category: "linked-list",
-    description: "Delete a node from a circular linked list.",
-    timeComplexity: { best: "O(1)", average: "O(n)", worst: "O(n)" },
-    spaceComplexity: "O(1)",
-    cppCode: `Node* deleteAtPos(Node* head, int pos) {
-  if (!head || head->next == head) return nullptr;
-  if (pos == 0) {
-    Node* tail = head;
-    while (tail->next != head) tail = tail->next;
-    Node* temp = head;
-    head = head->next;
-    tail->next = head;
-    delete temp;
-    return head;
-  }
-  Node* curr = head;
-  for (int i = 0; i < pos - 1; i++) {
-    curr = curr->next;
-    if (curr->next == head) break;
-  }
-  if (curr->next != head) {
-    Node* temp = curr->next;
-    curr->next = temp->next;
-    delete temp;
-  }
-  return head;
-}`,
-  },
 
   // ── Linked List ────────────────────────────────────────────────────────────
   {
@@ -695,49 +612,6 @@ Node* insertAtPos(Node* head, int val, int pos) {
     curr->next = newNode;
   }
   return head;
-}`,
-  },
-  {
-    id: "ll-delete",
-    name: "Delete Node",
-    category: "linked-list",
-    description: "Remove a node from the linked list by position or value.",
-    timeComplexity: { best: "O(1)", average: "O(n)", worst: "O(n)" },
-    spaceComplexity: "O(1)",
-    cppCode: `Node* deleteAtPos(Node* head, int pos) {
-  if (pos == 0 && head) {
-    Node* temp = head;
-    head = head->next;
-    delete temp;
-    return head;
-  }
-  Node* curr = head;
-  for (int i = 0; i < pos - 1 && curr; i++)
-    curr = curr->next;
-  if (curr && curr->next) {
-    Node* temp = curr->next;
-    curr->next = temp->next;
-    delete temp;
-  }
-  return head;
-}`,
-  },
-  {
-    id: "ll-reverse",
-    name: "Reverse List",
-    category: "linked-list",
-    description: "Reverse the entire linked list by reversing the direction of all pointers.",
-    timeComplexity: { best: "O(n)", average: "O(n)", worst: "O(n)" },
-    spaceComplexity: "O(1)",
-    cppCode: `Node* reverse(Node* head) {
-  Node* prev = nullptr, *curr = head;
-  while (curr) {
-    Node* next = curr->next;
-    curr->next = prev;
-    prev = curr;
-    curr = next;
-  }
-  return prev;
 }`,
   },
   {

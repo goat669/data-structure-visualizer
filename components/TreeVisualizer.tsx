@@ -5,6 +5,7 @@ import { TreeNode, TreeStep } from "@/lib/algorithms/types";
 import { runTreeAlgo } from "@/lib/algorithms/trees";
 import PlaybackControls from "./PlaybackControls";
 import StatsPanel from "./StatsPanel";
+import TreeEditor from "./TreeEditor";
 
 interface TreeVisualizerProps {
   algoId: string;
@@ -13,6 +14,7 @@ interface TreeVisualizerProps {
 export default function TreeVisualizer({ algoId }: TreeVisualizerProps) {
   const [mounted, setMounted] = useState(false);
   const [nodeCount, setNodeCount] = useState(7);
+  const [customValues, setCustomValues] = useState<number[] | null>(null);
   const [steps, setSteps] = useState<TreeStep[]>([]);
   const [currentStep, setCurrentStep] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -136,14 +138,12 @@ export default function TreeVisualizer({ algoId }: TreeVisualizerProps) {
         onSliderChange={(step) => setCurrentStep(step)}
       />
 
-      {/* Node count */}
-      <div className="bg-card border border-border rounded-lg p-4 space-y-3">
-        <div className="flex items-center justify-between">
-          <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest">Tree Size</span>
-          <span className="text-sm font-mono text-primary">{nodeCount} nodes</span>
-        </div>
-        <input type="range" min="1" max="9" value={nodeCount} onChange={(e) => setNodeCount(parseInt(e.target.value))} className="w-full cursor-pointer" />
-      </div>
+      {/* Editor */}
+      <TreeEditor
+        nodeCount={nodeCount}
+        onNodeCountChange={setNodeCount}
+        onRunAlgorithm={recompute}
+      />
     </div>
   );
 }

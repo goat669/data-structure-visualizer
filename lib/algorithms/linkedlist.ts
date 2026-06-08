@@ -5,19 +5,16 @@ export type LinkedListType = "singly" | "doubly" | "circular";
 export function runLinkedListAlgo(
   algoId: string,
   values: number[],
-  position: number,
+  insertValue: number,
+  insertPosition: number,
   type: LinkedListType = "singly"
 ): LinkedListStep[] {
   const steps: LinkedListStep[] = [];
 
   if (algoId === "ll-insert") {
-    return simulateInsert(values, position, steps, type);
-  } else if (algoId === "ll-delete") {
-    return simulateDelete(values, position, steps, type);
-  } else if (algoId === "ll-reverse") {
-    return simulateReverse(values, steps, type);
+    return simulateInsert(values, insertValue, insertPosition, steps, type);
   } else if (algoId === "ll-search") {
-    return simulateSearch(values, position, steps, type);
+    return simulateSearch(values, insertValue, steps, type);
   }
 
   return steps;
@@ -42,123 +39,54 @@ function getTypeInfo(type: LinkedListType): string {
 
 function simulateInsert(
   values: number[],
-  insertVal: number,
+  insertValue: number,
+  insertPos: number,
   steps: LinkedListStep[],
   type: LinkedListType
 ): LinkedListStep[] {
   let nodes: LinkedListNode[] = createNodes(values, type);
-  
+  const pos = Math.min(Math.max(0, insertPos), nodes.length);
+
   steps.push({
     nodes: JSON.parse(JSON.stringify(nodes)),
-    description: `> ${getTypeInfo(type)}: Insert ${insertVal}`,
+    description: `> ${getTypeInfo(type)}: Insert ${insertValue} at position ${pos}`,
   });
 
-  const insertPos = Math.min(2, values.length);
-  
   // Traverse to insertion point
-  for (let i = 0; i < insertPos; i++) {
+  for (let i = 0; i < pos && i < nodes.length; i++) {
     nodes[i].state = "current";
     steps.push({
       nodes: JSON.parse(JSON.stringify(nodes)),
       description: `> Traverse to position ${i}`,
-      extra: `Position: ${i}`,
+      extra: `Current node: ${nodes[i].value}`,
     });
     nodes[i].state = "default";
   }
 
-  // Insert new node
-  nodes.splice(insertPos, 0, {
+  // Create new node
+  const newNode: LinkedListNode = {
     id: nodes.length,
-    value: insertVal,
-    x: 100 + insertPos * 120,
+    value: insertValue,
+    x: 100 + pos * 120,
     y: 150,
     state: "inserted",
-  });
+  };
+
+  // Insert new node
+  nodes.splice(pos, 0, newNode);
 
   steps.push({
     nodes: JSON.parse(JSON.stringify(nodes)),
-    description: `> Inserted ${insertVal} at position ${insertPos}`,
-    extra: `${type === "circular" ? "Updated circle link" : "Pointer updated"}`,
+    description: `> Inserted ${insertValue} at position ${pos}`,
+    extra: `${type === "circular" ? "Circular link updated" : "Pointers updated"}`,
   });
 
-  return steps;
-}
-
-function simulateDelete(
-  values: number[],
-  deletePos: number,
-  steps: LinkedListStep[],
-  type: LinkedListType
-): LinkedListStep[] {
-  let nodes: LinkedListNode[] = createNodes(values, type);
-  const pos = Math.min(deletePos, values.length - 1);
-
+  // Mark as visited
+  nodes[pos].state = "visited";
   steps.push({
     nodes: JSON.parse(JSON.stringify(nodes)),
-    description: `> ${getTypeInfo(type)}: Delete at position ${pos}`,
-  });
-
-  // Traverse to deletion point
-  for (let i = 0; i < pos; i++) {
-    nodes[i].state = "current";
-    steps.push({
-      nodes: JSON.parse(JSON.stringify(nodes)),
-      description: `> Traverse to position ${i}`,
-    });
-    nodes[i].state = "default";
-  }
-
-  // Mark for deletion
-  nodes[pos].state = "deleted";
-  steps.push({
-    nodes: JSON.parse(JSON.stringify(nodes)),
-    description: `> Found node at position ${pos}: value ${nodes[pos].value}`,
-  });
-
-  // Delete
-  nodes.splice(pos, 1);
-  steps.push({
-    nodes: JSON.parse(JSON.stringify(nodes)),
-    description: `> Deleted node at position ${pos}`,
-    extra: `${type === "doubly" ? "Updated prev/next" : "Pointer rerouted"}`,
-  });
-
-  return steps;
-}
-
-function simulateReverse(
-  values: number[],
-  steps: LinkedListStep[],
-  type: LinkedListType
-): LinkedListStep[] {
-  let nodes: LinkedListNode[] = createNodes(values, type);
-  
-  steps.push({
-    nodes: JSON.parse(JSON.stringify(nodes)),
-    description: `> ${getTypeInfo(type)}: Reverse the list`,
-  });
-
-  // Show pointer reversal
-  for (let i = 0; i < Math.min(nodes.length - 1, 4); i++) {
-    nodes[i].state = "highlight";
-    if (i + 1 < nodes.length) nodes[i + 1].state = "current";
-
-    steps.push({
-      nodes: JSON.parse(JSON.stringify(nodes)),
-      description: `> Reversing: node ${i} ↔ ${i + 1}`,
-    });
-
-    nodes[i].state = "visited";
-  }
-
-  // Final reversed state
-  nodes.reverse();
-  nodes.forEach((n) => (n.state = "visited"));
-  
-  steps.push({
-    nodes: JSON.parse(JSON.stringify(nodes)),
-    description: `> Reverse complete`,
-    extra: type === "circular" ? "Circle direction reversed" : "Pointers reversed",
+    description: `> Insertion complete`,
+    extra: `New list has ${nodes.length} nodes`,
   });
 
   return steps;
@@ -171,7 +99,7 @@ function simulateSearch(
   type: LinkedListType
 ): LinkedListStep[] {
   let nodes: LinkedListNode[] = createNodes(values, type);
-  
+
   steps.push({
     nodes: JSON.parse(JSON.stringify(nodes)),
     description: `> ${getTypeInfo(type)}: Search for ${target}`,
@@ -183,6 +111,7 @@ function simulateSearch(
     steps.push({
       nodes: JSON.parse(JSON.stringify(nodes)),
       description: `> Checking node ${i}: value ${nodes[i].value}`,
+      extra: `Position: ${i}`,
     });
 
     if (nodes[i].value === target) {
@@ -195,17 +124,16 @@ function simulateSearch(
       found = true;
       break;
     }
-    nodes[i].state = "default";
+    nodes[i].state = "visited";
 
-    // For circular, limit iterations
     if (type === "circular" && i > values.length) break;
   }
 
   if (!found) {
     steps.push({
       nodes: JSON.parse(JSON.stringify(nodes)),
-      description: `> Value ${target} not found`,
-      extra: `Search failed`,
+      description: `> Value ${target} not found in list`,
+      extra: `Searched all ${nodes.length} nodes`,
     });
   }
 

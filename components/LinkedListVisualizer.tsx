@@ -14,7 +14,8 @@ export default function LinkedListVisualizer({ algoId }: LinkedListVisualizerPro
   const [mounted, setMounted] = useState(false);
   const [llType, setLLType] = useState<LinkedListType>("singly");
   const [values, setValues] = useState<number[]>([5, 12, 3, 8]);
-  const [searchVal, setSearchVal] = useState(12);
+  const [insertValue, setInsertValue] = useState(15);
+  const [insertPosition, setInsertPosition] = useState(1);
   const [steps, setSteps] = useState<LinkedListStep[]>([]);
   const [currentStep, setCurrentStep] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -28,10 +29,10 @@ export default function LinkedListVisualizer({ algoId }: LinkedListVisualizerPro
 
   const recompute = useCallback(() => {
     stopPlayback();
-    const s = runLinkedListAlgo(algoId, values, searchVal, llType);
+    const s = runLinkedListAlgo(algoId, values, insertValue, insertPosition, llType);
     setSteps(s);
     setCurrentStep(0);
-  }, [algoId, values, searchVal, llType]);
+  }, [algoId, values, insertValue, insertPosition, llType]);
 
   const stopPlayback = () => {
     setIsPlaying(false);
@@ -95,11 +96,9 @@ export default function LinkedListVisualizer({ algoId }: LinkedListVisualizerPro
 
       {/* Info Panel */}
       <div className="bg-card border border-border rounded-lg p-4 space-y-2">
-        <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest">{algoName} Operation</span>
+        <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest">Operation</span>
         <p className="text-sm text-foreground">
-          {algoId === "ll-insert" && "Insert a value into the linked list"}
-          {algoId === "ll-delete" && "Delete a node from the list"}
-          {algoId === "ll-reverse" && "Reverse the entire list by reversing all pointer directions"}
+          {algoId === "ll-insert" && "Insert a new node at a specified position in the list"}
           {algoId === "ll-search" && "Search for a value in the list"}
         </p>
         <p className="text-xs text-muted-foreground mt-2">Type: {llType === "singly" ? "Single direction only" : llType === "doubly" ? "Bidirectional pointers" : "Circular (loops back)"}</p>
@@ -149,9 +148,11 @@ export default function LinkedListVisualizer({ algoId }: LinkedListVisualizerPro
 
       {/* Input Panel */}
       <div className="bg-card border border-border rounded-lg p-4 space-y-3">
-        <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest">Configure List</span>
+        <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest">Configure</span>
         <div className="space-y-2">
-          <div className="flex gap-2">
+          {/* Array input */}
+          <div>
+            <label className="text-xs font-mono text-muted-foreground block mb-1">List values</label>
             <input
               type="text"
               value={values.join(", ")}
@@ -160,21 +161,45 @@ export default function LinkedListVisualizer({ algoId }: LinkedListVisualizerPro
                 setValues(vals.length > 0 ? vals : []);
               }}
               placeholder="e.g., 5, 12, 3, 8"
-              className="flex-1 px-3 py-2 bg-background border border-border rounded text-sm font-mono"
-            />
-            <button onClick={recompute} className="px-4 py-2 bg-primary text-primary-foreground rounded text-sm font-mono">
-              Run
-            </button>
-          </div>
-          {(algoId === "ll-search" || algoId === "ll-insert") && (
-            <input
-              type="number"
-              value={searchVal}
-              onChange={(e) => setSearchVal(parseInt(e.target.value) || 0)}
-              placeholder={algoId === "ll-search" ? "Search value" : "Insert value"}
               className="w-full px-3 py-2 bg-background border border-border rounded text-sm font-mono"
             />
+          </div>
+
+          {/* Insert value */}
+          <div>
+            <label className="text-xs font-mono text-muted-foreground block mb-1">Insert value</label>
+            <input
+              type="number"
+              value={insertValue}
+              onChange={(e) => setInsertValue(parseInt(e.target.value) || 0)}
+              className="w-full px-3 py-2 bg-background border border-border rounded text-sm font-mono"
+            />
+          </div>
+
+          {/* Insert position */}
+          {algoId === "ll-insert" && (
+            <div>
+              <label className="text-xs font-mono text-muted-foreground block mb-1">
+                Position (0 to {values.length}): {insertPosition}
+              </label>
+              <input
+                type="range"
+                min="0"
+                max={values.length}
+                value={insertPosition}
+                onChange={(e) => setInsertPosition(parseInt(e.target.value))}
+                className="w-full cursor-pointer"
+              />
+            </div>
           )}
+
+          {/* Run button */}
+          <button
+            onClick={recompute}
+            className="w-full px-4 py-2 bg-primary text-primary-foreground rounded text-sm font-mono hover:bg-primary/90 transition-colors"
+          >
+            Run Algorithm
+          </button>
         </div>
       </div>
     </div>
