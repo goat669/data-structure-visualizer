@@ -26,6 +26,10 @@ export default function LinkedListVisualizer({
   const [currentStep, setCurrentStep] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [speed, setSpeed] = useState(1);
+  const [offsetX, setOffsetX] = useState(0);
+  const [offsetY, setOffsetY] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const animationRef = useRef<number>();
 
   // Configuration
@@ -112,6 +116,10 @@ export default function LinkedListVisualizer({
     // Background
     ctx.fillStyle = "#f8f9fa";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Apply transformation for panning
+    ctx.save();
+    ctx.translate(offsetX, offsetY);
 
     const nodeRadius = 35;
     const nodeSpacing = 80;
@@ -257,15 +265,57 @@ export default function LinkedListVisualizer({
     ctx.fillStyle = "#6b7280";
     ctx.fillText(step.detail, 30, 38);
 
-  }, [mounted, steps, currentStep, llType]);
+    ctx.restore();
+  }, [mounted, steps, currentStep, llType, offsetX, offsetY]);
+
+  // Mouse handlers for panning
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const handleMouseDown = (e: MouseEvent) => {
+      setIsDragging(true);
+      setDragStart({ x: e.clientX - offsetX, y: e.clientY - offsetY });
+      canvas.style.cursor = "grab";
+    };
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isDragging) return;
+      setOffsetX(e.clientX - dragStart.x);
+      setOffsetY(e.clientY - dragStart.y);
+      canvas.style.cursor = "grabbing";
+    };
+
+    const handleMouseUp = () => {
+      setIsDragging(false);
+      canvas.style.cursor = "grab";
+    };
+
+    const handleWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      setOffsetY(offsetY + e.deltaY);
+    };
+
+    canvas.addEventListener("mousedown", handleMouseDown);
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+    canvas.addEventListener("wheel", handleWheel, { passive: false });
+
+    return () => {
+      canvas.removeEventListener("mousedown", handleMouseDown);
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+      canvas.removeEventListener("wheel", handleWheel);
+    };
+  }, [isDragging, dragStart, offsetX, offsetY]);
 
   if (!mounted) return null;
 
   return (
     <div className="space-y-4">
       {/* Configuration */}
-      <div className="bg-card border border-border rounded-lg p-4 space-y-4">
-        <h3 className="text-sm font-mono font-bold uppercase text-foreground">
+      <div className="bg-gradient-to-r from-card to-card/50 border border-border/50 rounded-xl p-5 space-y-4 shadow-lg">
+        <h3 className="text-sm font-mono font-bold uppercase text-foreground tracking-wider">
           {llType.toUpperCase()} - {operation.toUpperCase()}
         </h3>
 
@@ -393,12 +443,18 @@ export default function LinkedListVisualizer({
       {/* Canvas Visualization */}
       {steps.length > 0 && (
         <>
-          <canvas
-            ref={canvasRef}
-            width={800}
-            height={400}
-            className="w-full border border-border rounded-lg bg-background"
-          />
+          <div className="relative bg-gradient-to-br from-slate-900 to-slate-950 rounded-xl border border-border/50 overflow-hidden shadow-2xl hover:shadow-xl transition-shadow duration-300">
+            <canvas
+              ref={canvasRef}
+              width={800}
+              height={400}
+              className="w-full"
+              style={{ cursor: isDragging ? "grabbing" : "grab" }}
+            />
+            <div className="absolute top-3 right-3 text-xs font-mono text-muted-foreground bg-background/80 px-2 py-1 rounded backdrop-blur-sm">
+              Drag to pan • Scroll to pan vertically
+            </div>
+          </div>
 
           {/* Stats and Controls */}
           <div className="space-y-3">
