@@ -18,7 +18,16 @@ function VisualizerRouter({ algoId }: { algoId: string }) {
     return <GraphVisualizer key={algoId} algoId={algoId} />;
   }
   if (algo.category === "linked-list") {
-    return <LinkedListVisualizer key={algoId} algoId={algoId} />;
+    // Extract type and operation from algoId: "sll-insert" -> ("singly", "insert")
+    const parts = algoId.split("-");
+    const typeMap: Record<string, "singly" | "doubly" | "circular"> = {
+      sll: "singly",
+      dll: "doubly",
+      cll: "circular",
+    };
+    const type = typeMap[parts[0]] || "singly";
+    const operation = (parts[1] || "insert") as "insert" | "delete" | "search" | "reverse";
+    return <LinkedListVisualizer key={algoId} llType={type} operation={operation} />;
   }
   if (algo.category === "tree" || algo.category === "binary-tree") {
     return <TreeVisualizer key={algoId} algoId={algoId} />;

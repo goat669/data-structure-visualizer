@@ -583,6 +583,194 @@ DNode* insertAtPos(DNode* head, int val, int pos) {
   return head;
 }`,
   },
+  {
+    id: "sll-delete",
+    name: "Singly LL - Delete",
+    category: "linked-list",
+    description: "Delete a node from a singly linked list at any position.",
+    timeComplexity: { best: "O(1)", average: "O(n)", worst: "O(n)" },
+    spaceComplexity: "O(1)",
+    cppCode: `Node* deleteAtPos(Node* head, int pos) {
+  if (pos == 0 && head) {
+    Node* temp = head;
+    head = head->next;
+    delete temp;
+    return head;
+  }
+  Node* curr = head;
+  for (int i = 0; i < pos - 1 && curr; i++)
+    curr = curr->next;
+  if (curr && curr->next) {
+    Node* temp = curr->next;
+    curr->next = temp->next;
+    delete temp;
+  }
+  return head;
+}`,
+  },
+  {
+    id: "sll-search",
+    name: "Singly LL - Search",
+    category: "linked-list",
+    description: "Search for a value in a singly linked list.",
+    timeComplexity: { best: "O(1)", average: "O(n)", worst: "O(n)" },
+    spaceComplexity: "O(1)",
+    cppCode: `Node* search(Node* head, int target) {
+  while (head) {
+    if (head->data == target) return head;
+    head = head->next;
+  }
+  return nullptr;
+}`,
+  },
+  {
+    id: "sll-reverse",
+    name: "Singly LL - Reverse",
+    category: "linked-list",
+    description: "Reverse a singly linked list.",
+    timeComplexity: { best: "O(n)", average: "O(n)", worst: "O(n)" },
+    spaceComplexity: "O(1)",
+    cppCode: `Node* reverse(Node* head) {
+  Node* prev = nullptr;
+  Node* curr = head;
+  while (curr) {
+    Node* next = curr->next;
+    curr->next = prev;
+    prev = curr;
+    curr = next;
+  }
+  return prev;
+}`,
+  },
+  {
+    id: "dll-delete",
+    name: "Doubly LL - Delete",
+    category: "linked-list",
+    description: "Delete a node from a doubly linked list at any position.",
+    timeComplexity: { best: "O(1)", average: "O(n)", worst: "O(n)" },
+    spaceComplexity: "O(1)",
+    cppCode: `DNode* deleteAtPos(DNode* head, int pos) {
+  if (pos == 0 && head) {
+    DNode* temp = head;
+    head = head->next;
+    if (head) head->prev = nullptr;
+    delete temp;
+    return head;
+  }
+  DNode* curr = head;
+  for (int i = 0; i < pos - 1 && curr; i++)
+    curr = curr->next;
+  if (curr && curr->next) {
+    DNode* temp = curr->next;
+    curr->next = temp->next;
+    if (temp->next) temp->next->prev = curr;
+    delete temp;
+  }
+  return head;
+}`,
+  },
+  {
+    id: "dll-search",
+    name: "Doubly LL - Search",
+    category: "linked-list",
+    description: "Search for a value in a doubly linked list (can search forward or backward).",
+    timeComplexity: { best: "O(1)", average: "O(n)", worst: "O(n)" },
+    spaceComplexity: "O(1)",
+    cppCode: `DNode* search(DNode* head, int target) {
+  while (head) {
+    if (head->data == target) return head;
+    head = head->next;
+  }
+  return nullptr;
+}`,
+  },
+  {
+    id: "dll-reverse",
+    name: "Doubly LL - Reverse",
+    category: "linked-list",
+    description: "Reverse a doubly linked list (swap prev and next pointers).",
+    timeComplexity: { best: "O(n)", average: "O(n)", worst: "O(n)" },
+    spaceComplexity: "O(1)",
+    cppCode: `DNode* reverse(DNode* head) {
+  DNode* curr = head;
+  while (curr) {
+    swap(curr->next, curr->prev);
+    curr = curr->prev;
+  }
+  swap(head, curr);
+  return head;
+}`,
+  },
+  {
+    id: "cll-delete",
+    name: "Circular LL - Delete",
+    category: "linked-list",
+    description: "Delete a node from a circular linked list (maintains circular structure).",
+    timeComplexity: { best: "O(1)", average: "O(n)", worst: "O(n)" },
+    spaceComplexity: "O(1)",
+    cppCode: `Node* deleteAtPos(Node* head, int pos) {
+  if (!head || head->next == head) return nullptr;
+  if (pos == 0) {
+    Node* tail = head;
+    while (tail->next != head) tail = tail->next;
+    Node* temp = head;
+    head = head->next;
+    tail->next = head;
+    delete temp;
+    return head;
+  }
+  Node* curr = head;
+  for (int i = 0; i < pos - 1; i++) {
+    curr = curr->next;
+    if (curr->next == head) break;
+  }
+  if (curr->next != head) {
+    Node* temp = curr->next;
+    curr->next = temp->next;
+    delete temp;
+  }
+  return head;
+}`,
+  },
+  {
+    id: "cll-search",
+    name: "Circular LL - Search",
+    category: "linked-list",
+    description: "Search for a value in a circular linked list.",
+    timeComplexity: { best: "O(1)", average: "O(n)", worst: "O(n)" },
+    spaceComplexity: "O(1)",
+    cppCode: `Node* search(Node* head, int target) {
+  if (!head) return nullptr;
+  Node* curr = head;
+  do {
+    if (curr->data == target) return curr;
+    curr = curr->next;
+  } while (curr != head);
+  return nullptr;
+}`,
+  },
+  {
+    id: "cll-reverse",
+    name: "Circular LL - Reverse",
+    category: "linked-list",
+    description: "Reverse a circular linked list (maintains circular structure).",
+    timeComplexity: { best: "O(n)", average: "O(n)", worst: "O(n)" },
+    spaceComplexity: "O(1)",
+    cppCode: `Node* reverse(Node* head) {
+  if (!head || head->next == head) return head;
+  Node* prev = nullptr;
+  Node* curr = head;
+  Node* next = head->next;
+  do {
+    curr->next = prev;
+    prev = curr;
+    curr = next;
+    next = next->next;
+  } while (curr != head);
+  head->next = prev;
+  return prev;
+}`,
+  },
 
 
   // ── Stack (separate) ────────────────────────────────────────────────────────
