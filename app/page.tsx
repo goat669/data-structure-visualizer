@@ -1,12 +1,29 @@
 "use client";
 
 import { useState } from "react";
+import { ALGORITHMS } from "@/lib/algorithms/types";
 import Sidebar from "@/components/Sidebar";
 import Visualizer from "@/components/Visualizer";
+import GraphVisualizer from "@/components/GraphVisualizer";
+import StackQueueVisualizer from "@/components/StackQueueVisualizer";
+
+function VisualizerRouter({ algoId }: { algoId: string }) {
+  const algo = ALGORITHMS.find((a) => a.id === algoId);
+  if (!algo) return null;
+
+  if (algo.category === "graph") {
+    return <GraphVisualizer key={algoId} algoId={algoId} />;
+  }
+  if (algo.category === "stack-queue") {
+    return <StackQueueVisualizer key={algoId} algoId={algoId} />;
+  }
+  // sorting + searching
+  return <Visualizer key={algoId} algoId={algoId} />;
+}
 
 export default function HomePage() {
   const [selectedAlgo, setSelectedAlgo] = useState("bubble");
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen]   = useState(false);
 
   return (
     <div className="h-screen bg-background flex overflow-hidden">
@@ -40,7 +57,10 @@ export default function HomePage() {
       {/* Main content */}
       <main className="flex-1 overflow-y-auto min-w-0 flex flex-col">
         {/* Mobile top bar */}
-        <header className="md:hidden flex items-center gap-3 px-4 py-3 border-b border-border sticky top-0 z-10" style={{ background: "oklch(0.115 0 0)" }}>
+        <header
+          className="md:hidden flex items-center gap-3 px-4 py-3 border-b border-border sticky top-0 z-10"
+          style={{ background: "oklch(0.115 0 0)" }}
+        >
           <button
             onClick={() => setSidebarOpen(true)}
             className="p-1.5 rounded transition-colors hover:bg-secondary"
@@ -56,12 +76,14 @@ export default function HomePage() {
         </header>
 
         {/* Visualizer card */}
-        <div className="flex-1 p-4 md:p-6 flex flex-col">
+        <div className="flex-1 p-4 md:p-6">
           <div
-            className="w-full max-w-4xl mx-auto rounded-lg overflow-hidden flex flex-col"
+            className="w-full max-w-4xl mx-auto rounded-lg overflow-hidden"
             style={{ border: "1px solid oklch(1 0 0 / 7%)" }}
           >
-            <Visualizer key={selectedAlgo} algoId={selectedAlgo} />
+            <div className="p-5">
+              <VisualizerRouter algoId={selectedAlgo} />
+            </div>
           </div>
         </div>
       </main>

@@ -63,7 +63,7 @@ export default function ArrayGenerator({
           max={80}
           step={1}
           value={[arraySize]}
-          onValueChange={([v]) => onSizeChange(v)}
+          onValueChange={(vals) => onSizeChange(vals[0])}
           className="flex-1"
           aria-label="Array size"
         />
