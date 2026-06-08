@@ -1,8 +1,9 @@
 import { TreeNode, TreeStep } from "./types";
 
-export function runTreeAlgo(algoId: string, nodeCount: number = 7): TreeStep[] {
+export function runTreeAlgo(algoId: string, nodeCount: number = 7, customValues?: number[]): TreeStep[] {
   const steps: TreeStep[] = [];
-  const tree = createSampleBinaryTree(Math.min(9, Math.max(1, nodeCount)));
+  const valuesToUse = customValues && customValues.length > 0 ? customValues : undefined;
+  const tree = createSampleBinaryTree(Math.min(9, Math.max(1, nodeCount)), valuesToUse);
 
   if (algoId === "tree-bfs") {
     return simulateBFS(tree, steps);
@@ -23,9 +24,15 @@ export function runTreeAlgo(algoId: string, nodeCount: number = 7): TreeStep[] {
   return steps;
 }
 
-function createSampleBinaryTree(count: number): TreeNode[] {
+function createSampleBinaryTree(count: number, customValues?: number[]): TreeNode[] {
   const nodes: TreeNode[] = [];
-  const nodeValues = [4, 2, 6, 1, 3, 5, 7, 8, 9].slice(0, Math.max(1, count));
+  let nodeValues: number[];
+  
+  if (customValues && customValues.length > 0) {
+    nodeValues = customValues.slice(0, Math.max(1, count));
+  } else {
+    nodeValues = [4, 2, 6, 1, 3, 5, 7, 8, 9].slice(0, Math.max(1, count));
+  }
 
   for (let i = 0; i < nodeValues.length; i++) {
     const depth = Math.floor(Math.log2(i + 1));

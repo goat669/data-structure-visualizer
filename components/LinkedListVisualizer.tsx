@@ -1,326 +1,469 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
-import { ALGORITHMS, SortStep } from "@/lib/algorithms/types";
+import { useEffect, useRef, useState, useCallback } from "react";
+import type { LinkedListStep } from "@/lib/algorithms/llTypes";
 import {
-  singleLinkedListInsert,
-  singleLinkedListDelete,
-  singleLinkedListSearch,
-  doublyLinkedListInsert,
-  circularLinkedListInsert,
+  singlyInsert, singlyDelete, singlySearch, singlyReverse,
+  doublyInsert, doublyDelete, doublySearch, doublyReverse,
+  circularInsert, circularDelete, circularSearch, circularReverse,
 } from "@/lib/algorithms/linkedlist";
-import AlgoInfoPanel from "./AlgoInfoPanel";
-import PlaybackControls from "./PlaybackControls";
-import StatsPanel from "./StatsPanel";
-import VisualizerBars from "./VisualizerBars";
 
-const SPEED_MAP: Record<number, number> = { 1: 600, 2: 300, 3: 150, 4: 60, 5: 15 };
-
-function generateRandomArray(size: number): number[] {
-  return Array.from({ length: size }, () => Math.floor(Math.random() * 95) + 5);
-}
+type LLType = "singly" | "doubly" | "circular";
+type Operation = "insert" | "delete" | "search" | "reverse";
 
 interface LinkedListVisualizerProps {
-  algoId: string;
+  llType: LLType;
+  operation: Operation;
 }
 
-export default function LinkedListVisualizer({ algoId }: LinkedListVisualizerProps) {
-  const algo = ALGORITHMS.find((a) => a.id === algoId)!;
-
+export default function LinkedListVisualizer({
+  llType,
+  operation,
+}: LinkedListVisualizerProps) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const [mounted, setMounted] = useState(false);
-  const [arraySize, setArraySize] = useState(7);
-  const [baseArray, setBaseArray] = useState<number[]>([]);
-  const [position, setPosition] = useState(0);
-  const [searchTarget, setSearchTarget] = useState(0);
-
-  const [steps, setSteps] = useState<SortStep[]>([]);
+  const [steps, setSteps] = useState<LinkedListStep[]>([]);
   const [currentStep, setCurrentStep] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [speed, setSpeed] = useState(2);
+  const [speed, setSpeed] = useState(1);
+  const animationRef = useRef<number>();
 
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const isPlayingRef = useRef(false);
+  // Configuration
+  const [listSize, setListSize] = useState(7);
+  const [position, setPosition] = useState(2);
+  const [insertValue, setInsertValue] = useState(20);
+  const [searchValue, setSearchValue] = useState(15);
+  const [customValues, setCustomValues] = useState<string>("10,20,30,40,50,60,70");
+  const [useCustom, setUseCustom] = useState(false);
 
-  // Run algorithm based on ID
-  const runAlgo = useCallback((arr: number[], algoId: string, pos: number, target: number): SortStep[] => {
-    if (algoId.includes("sll-insert")) return singleLinkedListInsert(arr, pos, target);
-    if (algoId.includes("sll-delete")) return singleLinkedListDelete(arr, pos);
-    if (algoId.includes("sll-find")) return singleLinkedListSearch(arr, target);
-    if (algoId.includes("dll-insert")) return doublyLinkedListInsert(arr, pos, target);
-    if (algoId.includes("cll-insert")) return circularLinkedListInsert(arr, pos, target);
-    return singleLinkedListInsert(arr, pos, target);
-  }, []);
-
-  const recompute = useCallback(
-    (arr: number[], pos: number, target: number) => {
-      stopPlayback();
-      const s = runAlgo(arr, algoId, pos, target);
-      setSteps(s);
-      setCurrentStep(0);
-    },
-    [algoId, runAlgo]
-  );
-
-  useEffect(() => {
-    const arr = generateRandomArray(arraySize);
-    const target = arr[Math.floor(arr.length / 2)] ?? 0;
-    setBaseArray(arr);
-    setSearchTarget(target);
-    setPosition(Math.floor(arr.length / 2));
-    setMounted(true);
-    const s = runAlgo(arr, algoId, Math.floor(arr.length / 2), target);
-    setSteps(s);
-    setCurrentStep(0);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
-    if (!mounted || baseArray.length === 0) return;
-    recompute(baseArray, position, searchTarget);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [algoId]);
-
-  function stopPlayback() {
-    isPlayingRef.current = false;
-    setIsPlaying(false);
-    if (timerRef.current) {
-      clearTimeout(timerRef.current);
-      timerRef.current = null;
+  // Generate initial random values or parse custom values
+  const generateValues = useCallback((): number[] => {
+    if (useCustom && customValues.trim()) {
+      return customValues
+        .split(",")
+        .map((v) => parseInt(v.trim()))
+        .filter((v) => !isNaN(v))
+        .slice(0, 20);
     }
-  }
-
-  function startPlayback(fromStep: number, fromSteps: SortStep[], spd: number) {
-    isPlayingRef.current = true;
-    setIsPlaying(true);
-
-    let step = fromStep;
-
-    function tick() {
-      if (!isPlayingRef.current) return;
-      if (step >= fromSteps.length - 1) {
-        isPlayingRef.current = false;
-        setIsPlaying(false);
-        setCurrentStep(fromSteps.length - 1);
-        return;
-      }
-      step++;
-      setCurrentStep(step);
-      timerRef.current = setTimeout(tick, SPEED_MAP[spd]);
-    }
-
-    timerRef.current = setTimeout(tick, SPEED_MAP[spd]);
-  }
-
-  function handlePlay() {
-    if (currentStep >= steps.length - 1) return;
-    startPlayback(currentStep, steps, speed);
-  }
-
-  function handlePause() {
-    stopPlayback();
-  }
-
-  function handleReset() {
-    stopPlayback();
-    setCurrentStep(0);
-  }
-
-  function handleStepForward() {
-    stopPlayback();
-    setCurrentStep((s) => Math.min(s + 1, steps.length - 1));
-  }
-
-  function handleStepBack() {
-    stopPlayback();
-    setCurrentStep((s) => Math.max(s - 1, 0));
-  }
-
-  function handleSpeedChange(v: number) {
-    setSpeed(v);
-    if (isPlaying) {
-      stopPlayback();
-      startPlayback(currentStep, steps, v);
-    }
-  }
-
-  function handleSliderChange(step: number) {
-    stopPlayback();
-    setCurrentStep(step);
-  }
-
-  function applyNewArray(arr: number[]) {
-    setBaseArray(arr);
-    recompute(arr, position, searchTarget);
-  }
-
-  function handleSizeChange(size: number) {
-    setArraySize(size);
-    const arr = generateRandomArray(size);
-    applyNewArray(arr);
-  }
-
-  function handlePositionChange(pos: number) {
-    setPosition(pos);
-    recompute(baseArray, pos, searchTarget);
-  }
-
-  function handleTargetChange(target: number) {
-    setSearchTarget(target);
-    recompute(baseArray, position, target);
-  }
-
-  useEffect(() => () => stopPlayback(), []);
-
-  const currentData = steps[currentStep];
-  const bars = currentData?.array ?? baseArray.map((v) => ({ value: v, state: "default" as const }));
-  const maxValue = Math.max(...bars.map((b) => b.value), 1);
-  const isFinished = currentStep >= steps.length - 1;
-
-  if (!mounted) {
-    return (
-      <div className="flex flex-col gap-4 animate-pulse">
-        <div className="h-12 bg-card border border-border rounded-lg" />
-        <div className="h-20 bg-card border border-border rounded-lg" />
-        <div className="h-72 bg-card border border-border rounded-lg" />
-        <div className="h-32 bg-card border border-border rounded-lg" />
-      </div>
+    return Array.from({ length: listSize }, () =>
+      Math.floor(Math.random() * 100) + 1
     );
-  }
+  }, [listSize, useCustom, customValues]);
+
+  // Run algorithm
+  const runAlgorithm = useCallback(() => {
+    const values = generateValues();
+    let newSteps: LinkedListStep[] = [];
+
+    if (llType === "singly") {
+      if (operation === "insert") newSteps = singlyInsert(values, position, insertValue);
+      else if (operation === "delete") newSteps = singlyDelete(values, position);
+      else if (operation === "search") newSteps = singlySearch(values, searchValue);
+      else if (operation === "reverse") newSteps = singlyReverse(values);
+    } else if (llType === "doubly") {
+      if (operation === "insert") newSteps = doublyInsert(values, position, insertValue);
+      else if (operation === "delete") newSteps = doublyDelete(values, position);
+      else if (operation === "search") newSteps = doublySearch(values, searchValue);
+      else if (operation === "reverse") newSteps = doublyReverse(values);
+    } else if (llType === "circular") {
+      if (operation === "insert") newSteps = circularInsert(values, position, insertValue);
+      else if (operation === "delete") newSteps = circularDelete(values, position);
+      else if (operation === "search") newSteps = circularSearch(values, searchValue);
+      else if (operation === "reverse") newSteps = circularReverse(values);
+    }
+
+    setSteps(newSteps);
+    setCurrentStep(0);
+    setIsPlaying(false);
+  }, [llType, operation, listSize, position, insertValue, searchValue, generateValues]);
+
+  // Animation loop
+  useEffect(() => {
+    if (!isPlaying || steps.length === 0) return;
+
+    const interval = setInterval(() => {
+      setCurrentStep((prev) => {
+        if (prev < steps.length - 1) {
+          return prev + 1;
+        } else {
+          setIsPlaying(false);
+          return prev;
+        }
+      });
+    }, 800 / speed);
+
+    return () => clearInterval(interval);
+  }, [isPlaying, steps.length, speed]);
+
+  // Draw canvas
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas || !mounted || steps.length === 0) return;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    const step = steps[currentStep];
+
+    // Background
+    ctx.fillStyle = "#f8f9fa";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    const nodeRadius = 35;
+    const nodeSpacing = 80;
+
+    // Draw nodes with pointers
+    step.nodes.forEach((node, idx) => {
+      // State colors
+      const colors: Record<string, string> = {
+        default: "#e5e7eb",
+        comparing: "#fbbf24",
+        visited: "#a78bfa",
+        highlight: "#60a5fa",
+        found: "#34d399",
+        sorted: "#10b981",
+      };
+
+      const color = colors[node.state] || colors.default;
+
+      // Draw node circle
+      ctx.shadowColor = "rgba(0, 0, 0, 0.2)";
+      ctx.shadowBlur = 8;
+      ctx.shadowOffsetX = 2;
+      ctx.shadowOffsetY = 2;
+
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.arc(node.x, node.y, nodeRadius, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.shadowColor = "transparent";
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 3;
+      ctx.stroke();
+
+      // Draw value inside node
+      ctx.fillStyle = "#1f2937";
+      ctx.font = "bold 18px Arial";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(String(node.value), node.x, node.y);
+
+      // Draw pointer labels
+      ctx.fillStyle = "#6b7280";
+      ctx.font = "bold 11px Arial";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "bottom";
+
+      if (idx === 0) ctx.fillText("HEAD", node.x, node.y - nodeRadius - 8);
+      if (idx === step.nodes.length - 1 && llType !== "singly") {
+        ctx.fillText("TAIL", node.x, node.y - nodeRadius - 8);
+      }
+    });
+
+    // Draw arrows between nodes
+    for (let i = 0; i < step.nodes.length - 1; i++) {
+      const from = step.nodes[i];
+      const to = step.nodes[i + 1];
+
+      // Forward arrow (blue)
+      ctx.strokeStyle = "#3b82f6";
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(from.x + nodeRadius + 5, from.y);
+      ctx.lineTo(to.x - nodeRadius - 5, to.y);
+      ctx.stroke();
+
+      // Arrow head
+      const angle = Math.atan2(to.y - from.y, to.x - from.x);
+      ctx.fillStyle = "#3b82f6";
+      ctx.beginPath();
+      ctx.moveTo(to.x - nodeRadius - 5, to.y);
+      ctx.lineTo(to.x - nodeRadius - 12 * Math.cos(angle - Math.PI / 6), to.y - 12 * Math.sin(angle - Math.PI / 6));
+      ctx.lineTo(to.x - nodeRadius - 12 * Math.cos(angle + Math.PI / 6), to.y - 12 * Math.sin(angle + Math.PI / 6));
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    // Draw backward arrows for doubly
+    if (llType === "doubly") {
+      for (let i = step.nodes.length - 1; i > 0; i--) {
+        const from = step.nodes[i];
+        const to = step.nodes[i - 1];
+
+        ctx.strokeStyle = "#ec4899";
+        ctx.lineWidth = 2;
+        ctx.setLineDash([5, 5]);
+        ctx.beginPath();
+        ctx.moveTo(from.x - nodeRadius - 5, from.y + 15);
+        ctx.lineTo(to.x + nodeRadius + 5, to.y + 15);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+    }
+
+    // Draw circular arrow
+    if (llType === "circular" && step.nodes.length > 1) {
+      const lastNode = step.nodes[step.nodes.length - 1];
+      const firstNode = step.nodes[0];
+
+      ctx.strokeStyle = "#10b981";
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      const controlX = (lastNode.x + firstNode.x) / 2;
+      const controlY = lastNode.y + 80;
+      ctx.quadraticCurveTo(controlX, controlY, firstNode.x, firstNode.y - nodeRadius - 15);
+      ctx.stroke();
+
+      // Arrow head
+      const angle = Math.atan2((firstNode.y - nodeRadius - 15) - controlY, firstNode.x - controlX);
+      ctx.fillStyle = "#10b981";
+      ctx.beginPath();
+      ctx.moveTo(firstNode.x, firstNode.y - nodeRadius - 15);
+      ctx.lineTo(firstNode.x - 10 * Math.cos(angle - Math.PI / 6), (firstNode.y - nodeRadius - 15) - 10 * Math.sin(angle - Math.PI / 6));
+      ctx.lineTo(firstNode.x - 10 * Math.cos(angle + Math.PI / 6), (firstNode.y - nodeRadius - 15) - 10 * Math.sin(angle + Math.PI / 6));
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    // Draw description
+    ctx.fillStyle = "rgba(31, 41, 55, 0.08)";
+    ctx.fillRect(20, 10, 600, 50);
+    ctx.fillStyle = "#1f2937";
+    ctx.font = "bold 14px Arial";
+    ctx.textAlign = "left";
+    ctx.textBaseline = "top";
+    ctx.fillText(step.description, 30, 18);
+    ctx.font = "12px Arial";
+    ctx.fillStyle = "#6b7280";
+    ctx.fillText(step.detail, 30, 38);
+
+  }, [mounted, steps, currentStep, llType]);
+
+  if (!mounted) return null;
 
   return (
-    <div className="flex flex-col gap-4">
-      {/* Header */}
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-mono font-bold text-foreground">{algo.name}</h1>
-          <span className="text-[10px] font-mono text-muted-foreground capitalize">{algo.category}</span>
-        </div>
-        <span className="text-[10px] font-mono text-muted-foreground bg-secondary px-2 py-1 rounded">
-          Linked List
-        </span>
-      </div>
-
-      {/* Info panel */}
-      <div className="bg-card border border-border rounded-lg p-4">
-        <AlgoInfoPanel algo={algo} />
-      </div>
-
+    <div className="space-y-4">
       {/* Configuration */}
-      <div className="bg-card border border-border rounded-lg p-4 space-y-3">
-        <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest">
-          Configuration
-        </span>
+      <div className="bg-card border border-border rounded-lg p-4 space-y-4">
+        <h3 className="text-sm font-mono font-bold uppercase text-foreground">
+          {llType.toUpperCase()} - {operation.toUpperCase()}
+        </h3>
 
-        {/* Array size */}
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <label className="text-xs font-mono text-muted-foreground">List size</label>
-            <span className="text-sm font-mono text-primary">{arraySize}</span>
+        {/* Node Builder */}
+        <div className="border-b border-border pb-4">
+          <div className="flex gap-2 mb-3">
+            <button
+              onClick={() => setUseCustom(false)}
+              className={`px-3 py-1 text-xs font-mono rounded ${
+                !useCustom
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-background border border-border text-foreground"
+              }`}
+            >
+              Random
+            </button>
+            <button
+              onClick={() => setUseCustom(true)}
+              className={`px-3 py-1 text-xs font-mono rounded ${
+                useCustom
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-background border border-border text-foreground"
+              }`}
+            >
+              Custom Values
+            </button>
           </div>
-          <input
-            type="range"
-            min="3"
-            max="15"
-            value={arraySize}
-            onChange={(e) => handleSizeChange(parseInt(e.target.value))}
-            className="w-full cursor-pointer"
-          />
+          {useCustom && (
+            <div>
+              <label className="text-xs font-mono text-muted-foreground">Nodes (comma-separated)</label>
+              <input
+                type="text"
+                value={customValues}
+                onChange={(e) => setCustomValues(e.target.value)}
+                placeholder="10,20,30,40,50"
+                className="w-full px-2 py-1 bg-background border border-border rounded text-sm font-mono mt-1"
+              />
+              <div className="text-xs text-muted-foreground mt-1">
+                {customValues.split(",").filter(v => v.trim()).length} node(s)
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Position (for insert/delete) */}
-        {(algoId.includes("insert") || algoId.includes("delete")) && (
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <label className="text-xs font-mono text-muted-foreground">Position</label>
-              <span className="text-sm font-mono text-primary">{position}</span>
-            </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="text-xs font-mono text-muted-foreground">List Size</label>
             <input
               type="range"
-              min="0"
-              max={baseArray.length}
-              value={position}
-              onChange={(e) => handlePositionChange(parseInt(e.target.value))}
-              className="w-full cursor-pointer"
+              min="3"
+              max="10"
+              value={listSize}
+              onChange={(e) => setListSize(parseInt(e.target.value))}
+              className="w-full"
             />
+            <div className="text-xs text-foreground mt-1">{listSize} nodes</div>
           </div>
-        )}
 
-        {/* Search/Insert target */}
-        {(algoId.includes("find") || algoId.includes("insert")) && (
-          <div className="space-y-2">
-            <label className="text-xs font-mono text-muted-foreground block">
-              {algoId.includes("find") ? "Search for" : "Insert value"}
-            </label>
-            <input
-              type="number"
-              min="1"
-              max="100"
-              value={searchTarget}
-              onChange={(e) => handleTargetChange(parseInt(e.target.value) || 0)}
-              className="w-full px-3 py-2 bg-background border border-border rounded text-sm font-mono"
-            />
-          </div>
-        )}
+          {operation === "insert" && (
+            <>
+              <div>
+                <label className="text-xs font-mono text-muted-foreground">Position</label>
+                <input
+                  type="range"
+                  min="0"
+                  max={listSize}
+                  value={position}
+                  onChange={(e) => setPosition(parseInt(e.target.value))}
+                  className="w-full"
+                />
+                <div className="text-xs text-foreground mt-1">Pos: {position}</div>
+              </div>
+              <div>
+                <label className="text-xs font-mono text-muted-foreground">Value to Insert</label>
+                <input
+                  type="number"
+                  min="1"
+                  max="100"
+                  value={insertValue}
+                  onChange={(e) => setInsertValue(parseInt(e.target.value))}
+                  className="w-full px-2 py-1 bg-background border border-border rounded text-sm"
+                />
+              </div>
+            </>
+          )}
 
-        {/* Run button */}
+          {operation === "delete" && (
+            <div>
+              <label className="text-xs font-mono text-muted-foreground">Position to Delete</label>
+              <input
+                type="range"
+                min="0"
+                max={Math.max(0, listSize - 1)}
+                value={position}
+                onChange={(e) => setPosition(parseInt(e.target.value))}
+                className="w-full"
+              />
+              <div className="text-xs text-foreground mt-1">Pos: {position}</div>
+            </div>
+          )}
+
+          {operation === "search" && (
+            <div>
+              <label className="text-xs font-mono text-muted-foreground">Search Value</label>
+              <input
+                type="number"
+                min="1"
+                max="100"
+                value={searchValue}
+                onChange={(e) => setSearchValue(parseInt(e.target.value))}
+                className="w-full px-2 py-1 bg-background border border-border rounded text-sm"
+              />
+            </div>
+          )}
+        </div>
+
         <button
-          onClick={() => recompute(baseArray, position, searchTarget)}
-          className="w-full px-4 py-2 bg-primary text-primary-foreground rounded text-sm font-mono hover:bg-primary/90 transition-colors"
+          onClick={runAlgorithm}
+          className="w-full px-4 py-2 bg-primary text-primary-foreground rounded text-sm font-mono hover:bg-primary/90"
         >
           Run Algorithm
         </button>
       </div>
 
-      {/* Visualizer */}
-      <div className="bg-card border border-border rounded-lg p-4 flex flex-col gap-3">
-        <div className="flex items-center justify-between">
-          <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest">
-            Visualization
-          </span>
-          <span className="text-[10px] font-mono text-muted-foreground">
-            {bars.length} nodes
-          </span>
-        </div>
-        <div
-          style={{ height: "200px", background: "#0a0a0a", border: "1px solid #1a1a1a", borderRadius: "6px", padding: "12px 8px 8px" }}
-        >
-          <VisualizerBars bars={bars} maxValue={maxValue} isPlaying={isPlaying} />
-        </div>
-      </div>
+      {/* Canvas Visualization */}
+      {steps.length > 0 && (
+        <>
+          <canvas
+            ref={canvasRef}
+            width={800}
+            height={400}
+            className="w-full border border-border rounded-lg bg-background"
+          />
 
-      {/* Description */}
-      {currentData && (
-        <div className="bg-card border border-border rounded-lg p-4">
-          <p className="text-sm text-foreground font-mono">{currentData.description}</p>
-        </div>
+          {/* Stats and Controls */}
+          <div className="space-y-3">
+            {/* Stats */}
+            <div className="grid grid-cols-4 gap-2 text-center text-xs">
+              <div className="bg-card border border-border rounded p-2">
+                <div className="text-muted-foreground">STEP</div>
+                <div className="font-mono font-bold text-primary">{currentStep + 1} / {steps.length}</div>
+              </div>
+              <div className="bg-card border border-border rounded p-2">
+                <div className="text-muted-foreground">COMPARISONS</div>
+                <div className="font-mono font-bold">{steps[currentStep]?.comparisons}</div>
+              </div>
+              <div className="bg-card border border-border rounded p-2">
+                <div className="text-muted-foreground">OPERATIONS</div>
+                <div className="font-mono font-bold">{steps[currentStep]?.operations}</div>
+              </div>
+              <div className="bg-card border border-border rounded p-2">
+                <div className="text-muted-foreground">SPEED</div>
+                <div className="font-mono font-bold">{speed}x</div>
+              </div>
+            </div>
+
+            {/* Controls */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => { setCurrentStep(0); setIsPlaying(false); }}
+                className="px-3 py-2 bg-card border border-border rounded hover:bg-background"
+                title="Reset"
+              >
+                ⟲
+              </button>
+              <button
+                onClick={() => setCurrentStep(Math.max(0, currentStep - 1))}
+                className="px-3 py-2 bg-card border border-border rounded hover:bg-background"
+                title="Previous"
+              >
+                ❮
+              </button>
+              <button
+                onClick={() => setIsPlaying(!isPlaying)}
+                className={`px-3 py-2 rounded font-bold ${
+                  isPlaying
+                    ? "bg-red-500 text-white hover:bg-red-600"
+                    : "bg-green-500 text-white hover:bg-green-600"
+                }`}
+                title={isPlaying ? "Pause" : "Play"}
+              >
+                {isPlaying ? "⏸" : "▶"}
+              </button>
+              <button
+                onClick={() => setCurrentStep(Math.min(steps.length - 1, currentStep + 1))}
+                className="px-3 py-2 bg-card border border-border rounded hover:bg-background"
+                title="Next"
+              >
+                ❯
+              </button>
+
+              <div className="flex-1" />
+
+              {/* Speed control */}
+              <div className="flex items-center gap-1">
+                {[0.5, 1, 2, 4, 8].map((s) => (
+                  <button
+                    key={s}
+                    onClick={() => setSpeed(s)}
+                    className={`px-2 py-1 text-xs rounded ${
+                      speed === s
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-card border border-border hover:bg-background"
+                    }`}
+                  >
+                    {s}x
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </>
       )}
-
-      {/* Stats */}
-      <div className="bg-card border border-border rounded-lg p-4">
-        <StatsPanel
-          comparisons={currentData?.comparisons ?? 0}
-          swaps={currentData?.swaps ?? 0}
-          currentStep={currentStep}
-          totalSteps={steps.length}
-          description={currentData?.description || ""}
-        />
-      </div>
-
-      {/* Playback controls */}
-      <PlaybackControls
-        isPlaying={isPlaying}
-        isFinished={isFinished}
-        onPlay={handlePlay}
-        onPause={handlePause}
-        onReset={handleReset}
-        onStepBack={handleStepBack}
-        onStepForward={handleStepForward}
-        currentStep={currentStep}
-        totalSteps={steps.length}
-        speed={speed}
-        onSpeedChange={handleSpeedChange}
-        onSliderChange={handleSliderChange}
-      />
     </div>
   );
 }
