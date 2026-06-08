@@ -1,6 +1,6 @@
 // ─── Shared ─────────────────────────────────────────────────────────────────
 
-export type AlgorithmCategory = "sorting" | "searching" | "graph" | "linked-list" | "stack" | "queue" | "tree" | "bst" | "vector";
+export type AlgorithmCategory = "sorting" | "searching" | "graph" | "linked-list" | "stack" | "queue" | "tree" | "vector";
 
 export interface AlgorithmInfo {
   id: string;
@@ -941,42 +941,6 @@ public:
   postorder(root->right, result);
   result.push_back(root->val);
   return result;
-}`,
-  },
-
-  // ── Binary Search Tree ──────────────────────────────────────────────────────────
-  {
-    id: "bst-insert",
-    name: "BST Insert",
-    category: "bst",
-    description: "Insert a value into a binary search tree maintaining BST property (left < parent < right).",
-    timeComplexity: { best: "O(log n)", average: "O(log n)", worst: "O(n)" },
-    spaceComplexity: "O(h)",
-    cppCode: `TreeNode* insert(TreeNode* root, int val) {
-  if (!root)
-    return new TreeNode(val);
-  if (val < root->val)
-    root->left = insert(root->left, val);
-  else if (val > root->val)
-    root->right = insert(root->right, val);
-  return root;
-}`,
-  },
-  {
-    id: "bst-search",
-    name: "BST Search",
-    category: "bst",
-    description: "Search for a value in a binary search tree using divide-and-conquer approach.",
-    timeComplexity: { best: "O(log n)", average: "O(log n)", worst: "O(n)" },
-    spaceComplexity: "O(h)",
-    cppCode: `TreeNode* search(TreeNode* root, int target) {
-  if (!root)
-    return nullptr;
-  if (root->val == target)
-    return root;
-  if (target < root->val)
-    return search(root->left, target);
-  return search(root->right, target);
 }`,
   },
 
