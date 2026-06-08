@@ -98,21 +98,26 @@ export default function TreeVisualizer({ algoId }: TreeVisualizerProps) {
           background: "#0a0a0a", 
           border: "1px solid #1a1a1a", 
           borderRadius: "6px", 
-          overflow: "auto",
+          overflow: isPlaying ? "hidden" : "auto",
           position: "relative"
         }}
         onMouseDown={(e) => {
+          if (isPlaying) return;
           setIsDragging(true);
           setDragStart({ x: e.clientX - offsetX, y: e.clientY - offsetY });
         }}
         onMouseMove={(e) => {
-          if (!isDragging) return;
+          if (!isDragging || isPlaying) return;
           setOffsetX(e.clientX - dragStart.x);
           setOffsetY(e.clientY - dragStart.y);
         }}
         onMouseUp={() => setIsDragging(false)}
         onMouseLeave={() => setIsDragging(false)}
         onWheel={(e) => {
+          if (isPlaying) {
+            e.preventDefault();
+            return;
+          }
           e.preventDefault();
           setOffsetY(offsetY + e.deltaY);
         }}

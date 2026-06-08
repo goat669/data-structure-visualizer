@@ -258,10 +258,6 @@ function simulatePostorder(nodes: TreeNode[], steps: TreeStep[]): TreeStep[] {
 
   postorderDFS(0);
 
-  return {
-    nodes: steps[steps.length - 1]?.nodes || [],
-    traversalOrder: order,
-    description: "Post-Order traversal complete",
-  };
+  return steps;
 }
 
