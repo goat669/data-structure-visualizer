@@ -52,6 +52,20 @@ export function makeDAG(): { nodes: GraphNode[]; edges: GraphEdge[] } {
   return { nodes, edges };
 }
 
+// ─── Layout helper: arrange nodes in a circle ─────────────────────────────────
+
+export function layoutNodes(labels: string[]): GraphNode[] {
+  const n = labels.length;
+  const cx = 300, cy = 240, r = 180;
+  return labels.map((label, i) => ({
+    id: i,
+    x: cx + r * Math.cos((2 * Math.PI * i) / n - Math.PI / 2),
+    y: cy + r * Math.sin((2 * Math.PI * i) / n - Math.PI / 2),
+    label,
+    state: "default" as const,
+  }));
+}
+
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function cloneNodes(nodes: GraphNode[]): GraphNode[] {
@@ -75,8 +89,17 @@ function getNeighbours(edges: GraphEdge[], nodeId: number, directed = false): { 
 
 // ─── BFS ─────────────────────────────────────────────────────────────────────
 
-export function bfsSteps(src = 0): GraphStep[] {
-  const { nodes, edges } = makeDefaultGraph();
+export function bfsSteps(
+  customNodes?: GraphNode[],
+  customEdges?: GraphEdge[],
+  src = 0,
+): GraphStep[] {
+  const base = customNodes && customEdges
+    ? { nodes: customNodes.map(n => ({ ...n, state: "default" as const })), edges: customEdges.map(e => ({ ...e, state: "default" as const })) }
+    : makeDefaultGraph();
+  const { nodes, edges } = base;
+  if (src >= nodes.length) src = 0;
+
   const steps: GraphStep[] = [];
   const visited = new Set<number>();
   const queue: number[] = [];
@@ -119,8 +142,17 @@ export function bfsSteps(src = 0): GraphStep[] {
 
 // ─── DFS ─────────────────────────────────────────────────────────────────────
 
-export function dfsSteps(src = 0): GraphStep[] {
-  const { nodes, edges } = makeDefaultGraph();
+export function dfsSteps(
+  customNodes?: GraphNode[],
+  customEdges?: GraphEdge[],
+  src = 0,
+): GraphStep[] {
+  const base = customNodes && customEdges
+    ? { nodes: customNodes.map(n => ({ ...n, state: "default" as const })), edges: customEdges.map(e => ({ ...e, state: "default" as const })) }
+    : makeDefaultGraph();
+  const { nodes, edges } = base;
+  if (src >= nodes.length) src = 0;
+
   const steps: GraphStep[] = [];
   const visited = new Set<number>();
   const stackTrace: string[] = [];
@@ -157,8 +189,17 @@ export function dfsSteps(src = 0): GraphStep[] {
 
 // ─── Dijkstra ────────────────────────────────────────────────────────────────
 
-export function dijkstraSteps(src = 0): GraphStep[] {
-  const { nodes, edges } = makeDefaultGraph();
+export function dijkstraSteps(
+  customNodes?: GraphNode[],
+  customEdges?: GraphEdge[],
+  src = 0,
+): GraphStep[] {
+  const base = customNodes && customEdges
+    ? { nodes: customNodes.map(n => ({ ...n, state: "default" as const })), edges: customEdges.map(e => ({ ...e, state: "default" as const })) }
+    : makeDefaultGraph();
+  const { nodes, edges } = base;
+  if (src >= nodes.length) src = 0;
+
   const steps: GraphStep[] = [];
   const n = nodes.length;
   const dist = Array(n).fill(Infinity);
@@ -168,7 +209,6 @@ export function dijkstraSteps(src = 0): GraphStep[] {
   steps.push(snap(nodes, edges, `Init Dijkstra from ${nodes[src].label}. dist[${nodes[src].label}]=0`, `dist: [${dist.map((d, i) => `${nodes[i].label}:${d === Infinity ? "∞" : d}`).join(" ")}]`));
 
   for (let iter = 0; iter < n; iter++) {
-    // Pick min-dist unvisited node
     let u = -1;
     for (let i = 0; i < n; i++) {
       if (!visited.has(i) && (u === -1 || dist[i] < dist[u])) u = i;
@@ -204,8 +244,15 @@ export function dijkstraSteps(src = 0): GraphStep[] {
 
 // ─── Topological Sort ────────────────────────────────────────────────────────
 
-export function topoSortSteps(): GraphStep[] {
-  const { nodes, edges } = makeDAG();
+export function topoSortSteps(
+  customNodes?: GraphNode[],
+  customEdges?: GraphEdge[],
+): GraphStep[] {
+  const base = customNodes && customEdges
+    ? { nodes: customNodes.map(n => ({ ...n, state: "default" as const })), edges: customEdges.map(e => ({ ...e, state: "default" as const, directed: true })) }
+    : makeDAG();
+  const { nodes, edges } = base;
+
   const steps: GraphStep[] = [];
   const visited = new Set<number>();
   const order: string[] = [];
@@ -241,8 +288,17 @@ export function topoSortSteps(): GraphStep[] {
 
 // ─── Prim's MST ──────────────────────────────────────────────────────────────
 
-export function primSteps(src = 0): GraphStep[] {
-  const { nodes, edges } = makeDefaultGraph();
+export function primSteps(
+  customNodes?: GraphNode[],
+  customEdges?: GraphEdge[],
+  src = 0,
+): GraphStep[] {
+  const base = customNodes && customEdges
+    ? { nodes: customNodes.map(n => ({ ...n, state: "default" as const })), edges: customEdges.map(e => ({ ...e, state: "default" as const })) }
+    : makeDefaultGraph();
+  const { nodes, edges } = base;
+  if (src >= nodes.length) src = 0;
+
   const steps: GraphStep[] = [];
   const n = nodes.length;
   const inMST = new Set<number>();
@@ -254,7 +310,6 @@ export function primSteps(src = 0): GraphStep[] {
   steps.push(snap(nodes, edges, `Init Prim's MST from ${nodes[src].label}`, "MST edges: []"));
 
   for (let iter = 0; iter < n; iter++) {
-    // Pick minimum key not in MST
     let u = -1;
     for (let i = 0; i < n; i++) {
       if (!inMST.has(i) && (u === -1 || key[i] < key[u])) u = i;

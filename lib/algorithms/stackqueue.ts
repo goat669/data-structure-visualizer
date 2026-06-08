@@ -20,9 +20,12 @@ function snap(
   };
 }
 
-// ─── Stack Operations ────────────────────────────────────────────────────────
+// ─── Types ────────────────────────────────────────────────────────────────────
 
-const STACK_SEQUENCE = [
+export type StackOp = { op: "push" | "pop" | "peek"; val: string };
+export type QueueOp = { op: "enqueue" | "dequeue" | "front"; val: string };
+
+export const DEFAULT_STACK_SEQUENCE: StackOp[] = [
   { op: "push", val: "10" },
   { op: "push", val: "25" },
   { op: "push", val: "8"  },
@@ -35,19 +38,35 @@ const STACK_SEQUENCE = [
   { op: "pop",  val: ""   },
 ];
 
-export function stackOpsSteps(): StackQueueStep[] {
+export const DEFAULT_QUEUE_SEQUENCE: QueueOp[] = [
+  { op: "enqueue", val: "10" },
+  { op: "enqueue", val: "25" },
+  { op: "enqueue", val: "8"  },
+  { op: "front",   val: ""   },
+  { op: "enqueue", val: "42" },
+  { op: "dequeue", val: ""   },
+  { op: "dequeue", val: ""   },
+  { op: "enqueue", val: "15" },
+  { op: "dequeue", val: ""   },
+  { op: "dequeue", val: ""   },
+];
+
+export const DEFAULT_BRACKETS_EXPR = "{[A+(B*C)]-D/(E+F)}";
+export const DEFAULT_INFIX_EXPR    = "A+B*C-(D/E+F)*G";
+
+// ─── Stack Operations ────────────────────────────────────────────────────────
+
+export function stackOpsSteps(sequence: StackOp[] = DEFAULT_STACK_SEQUENCE): StackQueueStep[] {
   const steps: StackQueueStep[] = [];
   const stack: StackQueueItem[] = [];
 
   steps.push(snap([], "Stack initialized — empty LIFO structure", [], "init", "Top →"));
 
-  for (const { op, val } of STACK_SEQUENCE) {
+  for (const { op, val } of sequence) {
     if (op === "push") {
-      // Mark all existing as default, new item as pushing
       const newStack = stack.map((i) => item(i.value, "default"));
       newStack.push(item(val, "pushing"));
       steps.push(snap(newStack, `PUSH ${val} onto top of stack`, [], "push", `Pushed: ${val}`));
-      // Settle
       stack.push(item(val, "default"));
       steps.push(snap(stack.map((i) => item(i.value, "default")), `Stack after PUSH ${val}`, [], "push", `Size: ${stack.length}`));
     } else if (op === "pop") {
@@ -80,29 +99,16 @@ export function stackOpsSteps(): StackQueueStep[] {
 
 // ─── Queue Operations ────────────────────────────────────────────────────────
 
-const QUEUE_SEQUENCE = [
-  { op: "enqueue", val: "10" },
-  { op: "enqueue", val: "25" },
-  { op: "enqueue", val: "8"  },
-  { op: "front",   val: ""   },
-  { op: "enqueue", val: "42" },
-  { op: "dequeue", val: ""   },
-  { op: "dequeue", val: ""   },
-  { op: "enqueue", val: "15" },
-  { op: "dequeue", val: ""   },
-  { op: "dequeue", val: ""   },
-];
-
-export function queueOpsSteps(): StackQueueStep[] {
+export function queueOpsSteps(sequence: QueueOp[] = DEFAULT_QUEUE_SEQUENCE): StackQueueStep[] {
   const steps: StackQueueStep[] = [];
   const queue: StackQueueItem[] = [];
 
   steps.push(snap([], "Queue initialized — empty FIFO structure", [], "init", "← Rear   Front →"));
 
-  for (const { op, val } of QUEUE_SEQUENCE) {
+  for (const { op, val } of sequence) {
     if (op === "enqueue") {
       const newQueue = queue.map((i) => item(i.value, "default"));
-      newQueue.unshift(item(val, "pushing")); // rear is left in our display
+      newQueue.unshift(item(val, "pushing"));
       steps.push(snap(newQueue, `ENQUEUE ${val} at rear`, [], "enqueue", `Enqueued: ${val}`));
       queue.unshift(item(val, "default"));
       steps.push(snap(queue.map((i) => item(i.value, "default")), `Queue after ENQUEUE ${val}`, [], "enqueue", `Size: ${queue.length}`));
@@ -136,8 +142,7 @@ export function queueOpsSteps(): StackQueueStep[] {
 
 // ─── Balanced Brackets ───────────────────────────────────────────────────────
 
-export function balancedBracketsSteps(): StackQueueStep[] {
-  const expression = "{[A+(B*C)]-D/(E+F)}";
+export function balancedBracketsSteps(expression = DEFAULT_BRACKETS_EXPR): StackQueueStep[] {
   const steps: StackQueueStep[] = [];
   const stack: StackQueueItem[] = [];
   const OPEN  = new Set(["(", "[", "{"]);
@@ -151,10 +156,7 @@ export function balancedBracketsSteps(): StackQueueStep[] {
     const ch = expression[i];
     if (OPEN.has(ch)) {
       stack.push(item(ch, "pushing"));
-      steps.push(
-        snap([...stack], `PUSH '${ch}' — opening bracket`, [], "push",
-          `Token: '${ch}' at pos ${i}`)
-      );
+      steps.push(snap([...stack], `PUSH '${ch}' — opening bracket`, [], "push", `Token: '${ch}' at pos ${i}`));
       stack[stack.length - 1].state = "default";
     } else if (CLOSE.has(ch)) {
       if (stack.length === 0) {
@@ -179,7 +181,6 @@ export function balancedBracketsSteps(): StackQueueStep[] {
         break;
       }
     } else {
-      // Operand — just show, don't touch stack
       steps.push(snap([...stack], `Operand '${ch}' — skip`, [], "skip", `Token: '${ch}' at pos ${i}`));
     }
   }
@@ -188,10 +189,7 @@ export function balancedBracketsSteps(): StackQueueStep[] {
     if (stack.length === 0) {
       steps.push(snap([], `All brackets matched — BALANCED`, [], "done", "Result: BALANCED"));
     } else {
-      steps.push(
-        snap(stack.map((i) => item(i.value, "mismatch")),
-          `Unmatched opening brackets remain — UNBALANCED`, [], "error", "Result: UNBALANCED")
-      );
+      steps.push(snap(stack.map((i) => item(i.value, "mismatch")), `Unmatched opening brackets remain — UNBALANCED`, [], "error", "Result: UNBALANCED"));
     }
   }
 
@@ -206,48 +204,32 @@ function precedence(op: string): number {
   return 0;
 }
 
-export function infixToPostfixSteps(): StackQueueStep[] {
-  const expr = "A+B*C-(D/E+F)*G";
+export function infixToPostfixSteps(expr = DEFAULT_INFIX_EXPR): StackQueueStep[] {
   const steps: StackQueueStep[] = [];
   const opStack: StackQueueItem[] = [];
   const output: StackQueueItem[] = [];
 
-  steps.push(
-    snap([], `Input: "${expr}"`, [], "init", "Operator stack | Output queue"),
-    // intentional comma — we can add more later but one snap is fine
-  );
+  steps.push(snap([], `Input: "${expr}"`, [], "init", "Operator stack | Output queue"));
 
   for (let i = 0; i < expr.length; i++) {
     const ch = expr[i];
     if (/[A-Za-z0-9]/.test(ch)) {
       output.push(item(ch, "pushing"));
-      steps.push(
-        snap([...opStack], `Operand '${ch}' — append to output`, [...output], "operand",
-          `Token: '${ch}'`)
-      );
+      steps.push(snap([...opStack], `Operand '${ch}' — append to output`, [...output], "operand", `Token: '${ch}'`));
       output[output.length - 1].state = "default";
     } else if (ch === "(") {
       opStack.push(item(ch, "pushing"));
-      steps.push(
-        snap([...opStack], `'(' — push to operator stack`, [...output], "push",
-          `Token: '${ch}'`)
-      );
+      steps.push(snap([...opStack], `'(' — push to operator stack`, [...output], "push", `Token: '${ch}'`));
       opStack[opStack.length - 1].state = "default";
     } else if (ch === ")") {
-      steps.push(
-        snap([...opStack], `')' — pop until matching '('`, [...output], "pop",
-          `Token: '${ch}'`)
-      );
+      steps.push(snap([...opStack], `')' — pop until matching '('`, [...output], "pop", `Token: '${ch}'`));
       while (opStack.length && opStack[opStack.length - 1].value !== "(") {
         const op = opStack.pop()!;
         output.push(item(op.value, "pushing"));
-        steps.push(
-          snap([...opStack], `Pop '${op.value}' to output`, [...output], "pop",
-            `Popping: '${op.value}'`)
-        );
+        steps.push(snap([...opStack], `Pop '${op.value}' to output`, [...output], "pop", `Popping: '${op.value}'`));
         output[output.length - 1].state = "default";
       }
-      opStack.pop(); // remove '('
+      opStack.pop();
       steps.push(snap([...opStack], `Remove '(' from stack`, [...output], "pop", ""));
     } else if (["+", "-", "*", "/"].includes(ch)) {
       while (
@@ -257,17 +239,11 @@ export function infixToPostfixSteps(): StackQueueStep[] {
       ) {
         const op = opStack.pop()!;
         output.push(item(op.value, "pushing"));
-        steps.push(
-          snap([...opStack], `Pop '${op.value}' (higher/equal precedence) to output`, [...output], "pop",
-            `Popping: '${op.value}'`)
-        );
+        steps.push(snap([...opStack], `Pop '${op.value}' (higher/equal precedence) to output`, [...output], "pop", `Popping: '${op.value}'`));
         output[output.length - 1].state = "default";
       }
       opStack.push(item(ch, "pushing"));
-      steps.push(
-        snap([...opStack], `Push operator '${ch}' onto stack`, [...output], "push",
-          `Token: '${ch}'`)
-      );
+      steps.push(snap([...opStack], `Push operator '${ch}' onto stack`, [...output], "push", `Token: '${ch}'`));
       opStack[opStack.length - 1].state = "default";
     }
   }
@@ -275,18 +251,12 @@ export function infixToPostfixSteps(): StackQueueStep[] {
   while (opStack.length) {
     const op = opStack.pop()!;
     output.push(item(op.value, "pushing"));
-    steps.push(
-      snap([...opStack], `Pop remaining operator '${op.value}' to output`, [...output], "pop",
-        `Popping: '${op.value}'`)
-    );
+    steps.push(snap([...opStack], `Pop remaining operator '${op.value}' to output`, [...output], "pop", `Popping: '${op.value}'`));
     output[output.length - 1].state = "default";
   }
 
   const result = output.map((o) => o.value).join(" ");
-  steps.push(
-    snap([], `Conversion complete`, [...output], "done",
-      `Postfix: ${result}`)
-  );
+  steps.push(snap([], `Conversion complete`, [...output], "done", `Postfix: ${result}`));
 
   return steps;
 }
