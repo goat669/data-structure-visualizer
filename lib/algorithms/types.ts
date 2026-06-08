@@ -1,6 +1,6 @@
 // ─── Shared ─────────────────────────────────────────────────────────────────
 
-export type AlgorithmCategory = "sorting" | "searching" | "graph" | "linked-list" | "stack" | "queue" | "tree" | "binary-tree" | "vector";
+export type AlgorithmCategory = "sorting" | "searching" | "graph" | "linked-list" | "stack" | "queue" | "tree" | "vector";
 
 export interface AlgorithmInfo {
   id: string;
@@ -374,6 +374,45 @@ void topologicalSort(vector<vector<int>>& adj, int V) {
         pq.push({key[v], v});
       }
   }
+}`,
+  },
+  {
+    id: "bellman-ford",
+    name: "Bellman-Ford",
+    category: "graph",
+    description:
+      "Finds the shortest path from a source node to all other nodes in a weighted graph. Handles negative edge weights and detects negative cycles. Uses relaxation of all edges V-1 times. Slower than Dijkstra but more versatile.",
+    timeComplexity: { best: "O(VE)", average: "O(VE)", worst: "O(VE)" },
+    spaceComplexity: "O(V)",
+    cppCode: `bool bellmanFord(vector<vector<pair<int,int>>>& adj,
+                    int V, int src) {
+  vector<int> dist(V, INT_MAX);
+  dist[src] = 0;
+  
+  // Relax all edges V-1 times
+  for (int i = 0; i < V - 1; i++) {
+    for (int u = 0; u < V; u++) {
+      if (dist[u] != INT_MAX) {
+        for (auto [w, v] : adj[u]) {
+          if (dist[u] + w < dist[v]) {
+            dist[v] = dist[u] + w;
+          }
+        }
+      }
+    }
+  }
+  
+  // Check for negative cycle
+  for (int u = 0; u < V; u++) {
+    if (dist[u] != INT_MAX) {
+      for (auto [w, v] : adj[u]) {
+        if (dist[u] + w < dist[v]) {
+          return false; // Negative cycle found
+        }
+      }
+    }
+  }
+  return true;
 }`,
   },
   // ── Stack / Queue ──────────────────────────────────────────────────────────
@@ -905,73 +944,5 @@ public:
 }`,
   },
 
-  // ── Binary Tree / BST ───────────────────────────────────────────────────────
-  {
-    id: "bst-insert",
-    name: "BST Insert",
-    category: "binary-tree",
-    description: "Insert a value into a binary search tree maintaining BST property.",
-    timeComplexity: { best: "O(log n)", average: "O(log n)", worst: "O(n)" },
-    spaceComplexity: "O(h)",
-    cppCode: `TreeNode* insert(TreeNode* root, int val) {
-  if (!root)
-    return new TreeNode(val);
-  if (val < root->val)
-    root->left = insert(root->left, val);
-  else if (val > root->val)
-    root->right = insert(root->right, val);
-  return root;
-}`,
-  },
-  {
-    id: "bst-search",
-    name: "BST Search",
-    category: "binary-tree",
-    description: "Search for a value in a binary search tree.",
-    timeComplexity: { best: "O(log n)", average: "O(log n)", worst: "O(n)" },
-    spaceComplexity: "O(h)",
-    cppCode: `TreeNode* search(TreeNode* root, int target) {
-  if (!root)
-    return nullptr;
-  if (root->val == target)
-    return root;
-  if (target < root->val)
-    return search(root->left, target);
-  return search(root->right, target);
-}`,
-  },
-  {
-    id: "avl-insert",
-    name: "AVL Insert & Balance",
-    category: "binary-tree",
-    description: "Insert into an AVL tree with automatic balancing via rotations.",
-    timeComplexity: { best: "O(log n)", average: "O(log n)", worst: "O(log n)" },
-    spaceComplexity: "O(h)",
-    cppCode: `int height(AVLNode* n) {
-  return n ? n->h : 0;
-}
-
-AVLNode* rotateRight(AVLNode* y) {
-  AVLNode* x = y->left;
-  y->left = x->right;
-  x->right = y;
-  y->h = max(height(y->left), height(y->right)) + 1;
-  x->h = max(height(x->left), height(x->right)) + 1;
-  return x;
-}
-
-AVLNode* insert(AVLNode* node, int val) {
-  if (!node) return new AVLNode(val);
-  if (val < node->val)
-    node->left = insert(node->left, val);
-  else
-    node->right = insert(node->right, val);
-  node->h = max(height(node->left), height(node->right)) + 1;
-  int bal = height(node->left) - height(node->right);
-  if (bal > 1 && val < node->left->val)
-    return rotateRight(node);
-  return node;
-}`,
-  },
 ];
 
