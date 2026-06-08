@@ -30,7 +30,7 @@ export default function VisualizerBars({ bars, maxValue, isPlaying = false }: Vi
     <div className="w-full h-full flex items-end" style={{ gap }}>
       {bars.map((bar, idx) => {
         const heightPct = Math.max(2, (bar.value / maxValue) * 100);
-        const s = STATE[bar.state];
+        const s = STATE[bar.state] || STATE.default;
         const isActive = bar.state !== "default" && bar.state !== "searched";
 
         return (
