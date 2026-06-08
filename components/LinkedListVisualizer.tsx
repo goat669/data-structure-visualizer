@@ -33,7 +33,7 @@ export default function LinkedListVisualizer({
   const animationRef = useRef<number>();
 
   // Configuration
-  const [listSize, setListSize] = useState(10);
+  const [listSize, setListSize] = useState(8);
   const [position, setPosition] = useState(2);
   const [insertValue, setInsertValue] = useState(20);
   const [searchValue, setSearchValue] = useState(15);
@@ -451,9 +451,6 @@ export default function LinkedListVisualizer({
               className="w-full"
               style={{ cursor: isDragging ? "grabbing" : "grab" }}
             />
-            <div className="absolute top-3 right-3 text-xs font-mono text-muted-foreground bg-background/80 px-2 py-1 rounded backdrop-blur-sm">
-              Drag to pan • Scroll to pan vertically
-            </div>
           </div>
 
           {/* Stats and Controls */}
