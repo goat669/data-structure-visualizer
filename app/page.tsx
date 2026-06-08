@@ -5,6 +5,8 @@ import { ALGORITHMS } from "@/lib/algorithms/types";
 import Sidebar from "@/components/Sidebar";
 import Visualizer from "@/components/Visualizer";
 import GraphVisualizer from "@/components/GraphVisualizer";
+import LinkedListVisualizer from "@/components/LinkedListVisualizer";
+import TreeVisualizer from "@/components/TreeVisualizer";
 import StackQueueVisualizer from "@/components/StackQueueVisualizer";
 
 function VisualizerRouter({ algoId }: { algoId: string }) {
@@ -14,7 +16,13 @@ function VisualizerRouter({ algoId }: { algoId: string }) {
   if (algo.category === "graph") {
     return <GraphVisualizer key={algoId} algoId={algoId} />;
   }
-  if (algo.category === "stack-queue") {
+  if (algo.category === "linked-list") {
+    return <LinkedListVisualizer key={algoId} algoId={algoId} />;
+  }
+  if (algo.category === "tree" || algo.category === "binary-tree") {
+    return <TreeVisualizer key={algoId} algoId={algoId} />;
+  }
+  if (algo.category === "stack" || algo.category === "queue") {
     return <StackQueueVisualizer key={algoId} algoId={algoId} />;
   }
   // sorting + searching

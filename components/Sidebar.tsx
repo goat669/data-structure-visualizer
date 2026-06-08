@@ -15,7 +15,11 @@ const CATEGORIES: { id: AlgorithmCategory; label: string; color: string; icon: s
   { id: "sorting",     label: "Sorting",     color: "#c8843a", icon: "sort"   },
   { id: "searching",   label: "Searching",   color: "#60a5fa", icon: "search" },
   { id: "graph",       label: "Graph",       color: "#a855f7", icon: "graph"  },
-  { id: "stack-queue", label: "Stack/Queue", color: "#4ade80", icon: "stack"  },
+  { id: "linked-list", label: "Linked List", color: "#ec4899", icon: "link"   },
+  { id: "stack",       label: "Stack",       color: "#4ade80", icon: "stack"  },
+  { id: "queue",       label: "Queue",       color: "#06b6d4", icon: "queue"  },
+  { id: "tree",        label: "Tree",        color: "#f59e0b", icon: "tree"   },
+  { id: "binary-tree", label: "Binary Tree", color: "#8b5cf6", icon: "bst"    },
 ];
 
 function complexityColor(worst: string): string {
@@ -52,14 +56,55 @@ function CategoryIcon({ type, color }: { type: string; color: string }) {
       <line x1="3.5" y1="5.5" x2="8.5" y2="2.5" stroke={color} strokeWidth="1" opacity="0.4" />
     </svg>
   );
-  // stack
-  return (
+  if (type === "link") return (
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden>
+      <circle cx="3" cy="3" r="1.5" fill={color} />
+      <circle cx="9" cy="3" r="1.5" fill={color} />
+      <circle cx="6" cy="9" r="1.5" fill={color} />
+      <line x1="4.2" y1="3.8" x2="4.8" y2="8.2" stroke={color} strokeWidth="1" opacity="0.8" />
+      <line x1="7.8" y1="3.8" x2="7.2" y2="8.2" stroke={color} strokeWidth="1" opacity="0.8" />
+    </svg>
+  );
+  if (type === "stack") return (
     <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden>
       <rect x="1" y="1.5" width="10" height="2.5" rx="0.8" fill={color} />
       <rect x="1" y="5"   width="10" height="2.5" rx="0.8" fill={color} opacity="0.7" />
       <rect x="1" y="8.5" width="10" height="2.5" rx="0.8" fill={color} opacity="0.4" />
     </svg>
   );
+  if (type === "queue") return (
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden>
+      <rect x="1.5" y="1" width="2.5" height="10" rx="0.8" fill={color} />
+      <rect x="5"   y="1" width="2.5" height="10" rx="0.8" fill={color} opacity="0.7" />
+      <rect x="8.5" y="1" width="2.5" height="10" rx="0.8" fill={color} opacity="0.4" />
+    </svg>
+  );
+  if (type === "tree") return (
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden>
+      <circle cx="6" cy="1.5" r="1" fill={color} />
+      <circle cx="2.5" cy="6" r="1" fill={color} opacity="0.8" />
+      <circle cx="9.5" cy="6" r="1" fill={color} opacity="0.8" />
+      <circle cx="6" cy="10.5" r="0.8" fill={color} opacity="0.6" />
+      <line x1="6" y1="2.5" x2="2.5" y2="5" stroke={color} strokeWidth="1" opacity="0.7" />
+      <line x1="6" y1="2.5" x2="9.5" y2="5" stroke={color} strokeWidth="1" opacity="0.7" />
+      <line x1="6" y1="7" x2="6" y2="9.7" stroke={color} strokeWidth="1" opacity="0.7" />
+    </svg>
+  );
+  if (type === "bst") return (
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden>
+      <circle cx="6" cy="2" r="1" fill={color} />
+      <circle cx="3" cy="6" r="0.9" fill={color} opacity="0.9" />
+      <circle cx="9" cy="6" r="0.9" fill={color} opacity="0.9" />
+      <circle cx="1.5" cy="10" r="0.7" fill={color} opacity="0.7" />
+      <circle cx="4.5" cy="10" r="0.7" fill={color} opacity="0.7" />
+      <circle cx="7.5" cy="10" r="0.7" fill={color} opacity="0.7" />
+      <circle cx="10.5" cy="10" r="0.7" fill={color} opacity="0.7" />
+      <line x1="5.7" y1="2.8" x2="3.3" y2="5.2" stroke={color} strokeWidth="1" opacity="0.6" />
+      <line x1="6.3" y1="2.8" x2="8.7" y2="5.2" stroke={color} strokeWidth="1" opacity="0.6" />
+    </svg>
+  );
+  // fallback
+  return <div className="w-3 h-3 rounded bg-current opacity-50" />;
 }
 
 // ─── Group by category ────────────────────────────────────────────────────────

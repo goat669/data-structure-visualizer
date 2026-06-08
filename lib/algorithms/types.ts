@@ -1,6 +1,6 @@
 // ─── Shared ─────────────────────────────────────────────────────────────────
 
-export type AlgorithmCategory = "sorting" | "searching" | "graph" | "stack-queue";
+export type AlgorithmCategory = "sorting" | "searching" | "graph" | "linked-list" | "stack" | "queue" | "tree" | "binary-tree";
 
 export interface AlgorithmInfo {
   id: string;
@@ -65,6 +65,42 @@ export interface StackQueueStep {
   description: string;
   operation?: string;
   extra?: string;              // e.g. current token, result
+}
+
+// ─── Linked List ─────────────────────────────────────────────────────────────
+
+export interface LinkedListNode {
+  id: number;
+  value: number;
+  x: number;
+  y: number;
+  state: "default" | "current" | "highlight" | "deleted" | "inserted" | "found";
+  nextArrow?: "default" | "active" | "highlight";
+}
+
+export interface LinkedListStep {
+  nodes: LinkedListNode[];
+  description: string;
+  extra?: string;
+}
+
+// ─── Tree / Binary Tree ───────────────────────────────────────────────────────
+
+export interface TreeNode {
+  id: number;
+  value: number;
+  x: number;
+  y: number;
+  children: number[]; // child node IDs
+  state: "default" | "visiting" | "visited" | "current" | "found" | "unbalanced";
+  childConnections?: Array<{ to: number; state: "default" | "active" | "highlight" }>;
+}
+
+export interface TreeStep {
+  nodes: TreeNode[];
+  description: string;
+  extra?: string; // balance factor, rotation info, traversal order
+  traversalOrder?: number[]; // node IDs in order of traversal
 }
 
 // ─── Algorithm registry ──────────────────────────────────────────────────────
@@ -344,7 +380,7 @@ void topologicalSort(vector<vector<int>>& adj, int V) {
   {
     id: "stack-ops",
     name: "Stack Operations",
-    category: "stack-queue",
+    category: "stack",
     description:
       "Demonstrates push, pop, and peek on a LIFO (Last-In First-Out) stack. Elements are added and removed from the same end (top). Used in undo systems, function call stacks, and expression evaluation.",
     timeComplexity: { best: "O(1)", average: "O(1)", worst: "O(1)" },
@@ -369,7 +405,7 @@ bool empty = st.empty();`,
   {
     id: "queue-ops",
     name: "Queue Operations",
-    category: "stack-queue",
+    category: "queue",
     description:
       "Demonstrates enqueue (push_back) and dequeue (pop_front) on a FIFO (First-In First-Out) queue. Elements are added at the rear and removed from the front. Used in BFS, task scheduling, and buffers.",
     timeComplexity: { best: "O(1)", average: "O(1)", worst: "O(1)" },
@@ -394,7 +430,7 @@ bool empty = q.empty();`,
   {
     id: "balanced-brackets",
     name: "Balanced Brackets",
-    category: "stack-queue",
+    category: "stack",
     description:
       "Uses a stack to verify that every opening bracket has a matching closing bracket in the correct order. A classic interview problem demonstrating stack-based string parsing.",
     timeComplexity: { best: "O(1)", average: "O(n)", worst: "O(n)" },
@@ -418,7 +454,7 @@ bool empty = q.empty();`,
   {
     id: "infix-postfix",
     name: "Infix to Postfix",
-    category: "stack-queue",
+    category: "stack",
     description:
       "Converts an infix expression (e.g. A+B*C) to postfix (Reverse Polish Notation, e.g. ABC*+) using the Shunting Yard algorithm. Demonstrates operator precedence handling with a stack.",
     timeComplexity: { best: "O(n)", average: "O(n)", worst: "O(n)" },
@@ -453,4 +489,255 @@ string infixToPostfix(string expr) {
   return result;
 }`,
   },
+
+  // ── Linked List ────────────────────────────────────────────────────────────
+  {
+    id: "ll-insert",
+    name: "Insert Node",
+    category: "linked-list",
+    description: "Insert a new node at the beginning, middle, or end of a linked list.",
+    timeComplexity: { best: "O(1)", average: "O(n)", worst: "O(n)" },
+    spaceComplexity: "O(1)",
+    cppCode: `struct Node {
+  int data;
+  Node* next;
+  Node(int val) : data(val), next(nullptr) {}
+};
+
+Node* insertAtPos(Node* head, int val, int pos) {
+  Node* newNode = new Node(val);
+  if (pos == 0) {
+    newNode->next = head;
+    return newNode;
+  }
+  Node* curr = head;
+  for (int i = 0; i < pos - 1 && curr; i++)
+    curr = curr->next;
+  if (curr) {
+    newNode->next = curr->next;
+    curr->next = newNode;
+  }
+  return head;
+}`,
+  },
+  {
+    id: "ll-delete",
+    name: "Delete Node",
+    category: "linked-list",
+    description: "Remove a node from the linked list by position or value.",
+    timeComplexity: { best: "O(1)", average: "O(n)", worst: "O(n)" },
+    spaceComplexity: "O(1)",
+    cppCode: `Node* deleteAtPos(Node* head, int pos) {
+  if (pos == 0 && head) {
+    Node* temp = head;
+    head = head->next;
+    delete temp;
+    return head;
+  }
+  Node* curr = head;
+  for (int i = 0; i < pos - 1 && curr; i++)
+    curr = curr->next;
+  if (curr && curr->next) {
+    Node* temp = curr->next;
+    curr->next = temp->next;
+    delete temp;
+  }
+  return head;
+}`,
+  },
+  {
+    id: "ll-reverse",
+    name: "Reverse List",
+    category: "linked-list",
+    description: "Reverse the entire linked list by reversing the direction of all pointers.",
+    timeComplexity: { best: "O(n)", average: "O(n)", worst: "O(n)" },
+    spaceComplexity: "O(1)",
+    cppCode: `Node* reverse(Node* head) {
+  Node* prev = nullptr, *curr = head;
+  while (curr) {
+    Node* next = curr->next;
+    curr->next = prev;
+    prev = curr;
+    curr = next;
+  }
+  return prev;
+}`,
+  },
+  {
+    id: "ll-search",
+    name: "Search Node",
+    category: "linked-list",
+    description: "Find a node with a specific value in the linked list.",
+    timeComplexity: { best: "O(1)", average: "O(n)", worst: "O(n)" },
+    spaceComplexity: "O(1)",
+    cppCode: `Node* search(Node* head, int target) {
+  Node* curr = head;
+  while (curr) {
+    if (curr->data == target)
+      return curr;
+    curr = curr->next;
+  }
+  return nullptr;
+}`,
+  },
+
+  // ── Stack (separate) ────────────────────────────────────────────────────────
+  {
+    id: "stack-ops",
+    name: "Stack Operations",
+    category: "stack",
+    description: "Perform push, pop, and peek operations on a stack (LIFO data structure).",
+    timeComplexity: { best: "O(1)", average: "O(1)", worst: "O(1)" },
+    spaceComplexity: "O(n)",
+    cppCode: `class Stack {
+  vector<int> arr;
+public:
+  void push(int x) { arr.push_back(x); }
+  void pop() { if (!arr.empty()) arr.pop_back(); }
+  int peek() { return arr.empty() ? -1 : arr.back(); }
+  bool isEmpty() { return arr.empty(); }
+};`,
+  },
+
+  // ── Queue (separate) ────────────────────────────────────────────────────────
+  {
+    id: "queue-ops",
+    name: "Queue Operations",
+    category: "queue",
+    description: "Perform enqueue, dequeue, and front operations on a queue (FIFO data structure).",
+    timeComplexity: { best: "O(1)", average: "O(1)", worst: "O(1)" },
+    spaceComplexity: "O(n)",
+    cppCode: `class Queue {
+  deque<int> arr;
+public:
+  void enqueue(int x) { arr.push_back(x); }
+  void dequeue() { if (!arr.empty()) arr.pop_front(); }
+  int front() { return arr.empty() ? -1 : arr.front(); }
+  bool isEmpty() { return arr.empty(); }
+};`,
+  },
+
+  // ── Tree ────────────────────────────────────────────────────────────────────
+  {
+    id: "tree-bfs",
+    name: "Level Order (BFS)",
+    category: "tree",
+    description: "Traverse tree level by level using breadth-first search.",
+    timeComplexity: { best: "O(n)", average: "O(n)", worst: "O(n)" },
+    spaceComplexity: "O(w)",
+    cppCode: `vector<int> levelOrder(TreeNode* root) {
+  vector<int> result;
+  if (!root) return result;
+  queue<TreeNode*> q;
+  q.push(root);
+  while (!q.empty()) {
+    TreeNode* node = q.front();
+    q.pop();
+    result.push_back(node->val);
+    if (node->left) q.push(node->left);
+    if (node->right) q.push(node->right);
+  }
+  return result;
+}`,
+  },
+  {
+    id: "tree-dfs-inorder",
+    name: "In-Order Traversal (DFS)",
+    category: "tree",
+    description: "Traverse tree using depth-first search in left-root-right order.",
+    timeComplexity: { best: "O(n)", average: "O(n)", worst: "O(n)" },
+    spaceComplexity: "O(h)",
+    cppCode: `vector<int> inorder(TreeNode* root, vector<int>& result) {
+  if (!root) return result;
+  inorder(root->left, result);
+  result.push_back(root->val);
+  inorder(root->right, result);
+  return result;
+}`,
+  },
+  {
+    id: "tree-dfs-preorder",
+    name: "Pre-Order Traversal (DFS)",
+    category: "tree",
+    description: "Traverse tree in root-left-right order.",
+    timeComplexity: { best: "O(n)", average: "O(n)", worst: "O(n)" },
+    spaceComplexity: "O(h)",
+    cppCode: `vector<int> preorder(TreeNode* root, vector<int>& result) {
+  if (!root) return result;
+  result.push_back(root->val);
+  preorder(root->left, result);
+  preorder(root->right, result);
+  return result;
+}`,
+  },
+
+  // ── Binary Tree / BST ───────────────────────────────────────────────────────
+  {
+    id: "bst-insert",
+    name: "BST Insert",
+    category: "binary-tree",
+    description: "Insert a value into a binary search tree maintaining BST property.",
+    timeComplexity: { best: "O(log n)", average: "O(log n)", worst: "O(n)" },
+    spaceComplexity: "O(h)",
+    cppCode: `TreeNode* insert(TreeNode* root, int val) {
+  if (!root)
+    return new TreeNode(val);
+  if (val < root->val)
+    root->left = insert(root->left, val);
+  else if (val > root->val)
+    root->right = insert(root->right, val);
+  return root;
+}`,
+  },
+  {
+    id: "bst-search",
+    name: "BST Search",
+    category: "binary-tree",
+    description: "Search for a value in a binary search tree.",
+    timeComplexity: { best: "O(log n)", average: "O(log n)", worst: "O(n)" },
+    spaceComplexity: "O(h)",
+    cppCode: `TreeNode* search(TreeNode* root, int target) {
+  if (!root)
+    return nullptr;
+  if (root->val == target)
+    return root;
+  if (target < root->val)
+    return search(root->left, target);
+  return search(root->right, target);
+}`,
+  },
+  {
+    id: "avl-insert",
+    name: "AVL Insert & Balance",
+    category: "binary-tree",
+    description: "Insert into an AVL tree with automatic balancing via rotations.",
+    timeComplexity: { best: "O(log n)", average: "O(log n)", worst: "O(log n)" },
+    spaceComplexity: "O(h)",
+    cppCode: `int height(AVLNode* n) {
+  return n ? n->h : 0;
+}
+
+AVLNode* rotateRight(AVLNode* y) {
+  AVLNode* x = y->left;
+  y->left = x->right;
+  x->right = y;
+  y->h = max(height(y->left), height(y->right)) + 1;
+  x->h = max(height(x->left), height(x->right)) + 1;
+  return x;
+}
+
+AVLNode* insert(AVLNode* node, int val) {
+  if (!node) return new AVLNode(val);
+  if (val < node->val)
+    node->left = insert(node->left, val);
+  else
+    node->right = insert(node->right, val);
+  node->h = max(height(node->left), height(node->right)) + 1;
+  int bal = height(node->left) - height(node->right);
+  if (bal > 1 && val < node->left->val)
+    return rotateRight(node);
+  return node;
+}`,
+  },
 ];
+
