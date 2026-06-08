@@ -147,7 +147,7 @@ export default function LinkedListVisualizer({ algoId }: LinkedListVisualizerPro
       />
 
       {/* Input Panel */}
-      <div className="bg-card border border-border rounded-lg p-4 space-y-3">
+      <div className="bg-card border border-border rounded-lg p-4 space-y-3 max-h-80 overflow-y-auto">
         <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest">Configure</span>
         <div className="space-y-2">
           {/* Array input */}
@@ -177,7 +177,7 @@ export default function LinkedListVisualizer({ algoId }: LinkedListVisualizerPro
           </div>
 
           {/* Insert position */}
-          {algoId === "ll-insert" && (
+          {algoId.includes("insert") && (
             <div>
               <label className="text-xs font-mono text-muted-foreground block mb-1">
                 Position (0 to {values.length}): {insertPosition}
