@@ -56,7 +56,7 @@ export default function VectorVisualizer({ algoId }: VectorVisualizerProps) {
     };
   }, [isPlaying, currentStep, steps.length, speed]);
 
-  // Draw vector
+  // Draw vector with colorful visualization
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas || !mounted || steps.length === 0) return;
@@ -65,50 +65,74 @@ export default function VectorVisualizer({ algoId }: VectorVisualizerProps) {
     if (!ctx) return;
 
     const step = steps[currentStep];
-    ctx.fillStyle = "#ffffff";
+    
+    // Gradient background
+    const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+    gradient.addColorStop(0, "#f8f9fa");
+    gradient.addColorStop(1, "#ffffff");
+    ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    const barWidth = 40;
-    const barHeight = 120;
-    const gap = 10;
-    const startX = 50;
-    const startY = 150;
+    const barWidth = 45;
+    const barHeight = 130;
+    const gap = 12;
+    const startX = 60;
+    const startY = 160;
+
+    // Color palette
+    const colorMap: Record<string, string> = {
+      sorted: "#10b981",
+      comparing: "#f59e0b",
+      swapping: "#ef4444",
+      default: "#3b82f6",
+    };
 
     step.array.forEach((element, index) => {
       const x = startX + index * (barWidth + gap);
       const y = startY;
       const height = (element.value / 50) * barHeight;
+      const color = colorMap[element.state as keyof typeof colorMap] || colorMap.default;
 
-      // Draw bar
-      ctx.fillStyle =
-        element.state === "sorted" ? "#22c55e" :
-        element.state === "comparing" ? "#f59e0b" :
-        element.state === "swapping" ? "#ef4444" :
-        "#3b82f6";
+      // Shadow effect
+      ctx.shadowColor = "rgba(0, 0, 0, 0.15)";
+      ctx.shadowBlur = 6;
+      ctx.shadowOffsetX = 2;
+      ctx.shadowOffsetY = 3;
+
+      // Draw bar with gradient
+      const barGradient = ctx.createLinearGradient(x, y - height, x, y);
+      barGradient.addColorStop(0, color);
+      barGradient.addColorStop(1, color + "dd");
+      ctx.fillStyle = barGradient;
       ctx.fillRect(x, y - height, barWidth, height);
-      ctx.strokeStyle = "#000000";
-      ctx.lineWidth = 2;
+
+      // Border
+      ctx.shadowColor = "transparent";
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2.5;
       ctx.strokeRect(x, y - height, barWidth, height);
 
-      // Draw value
-      ctx.fillStyle = "#000000";
-      ctx.font = "bold 12px Arial";
+      // Draw value with better styling
+      ctx.fillStyle = "#1f2937";
+      ctx.font = "bold 13px Arial";
       ctx.textAlign = "center";
       ctx.textBaseline = "top";
-      ctx.fillText(String(element.value), x + barWidth / 2, y + 10);
+      ctx.fillText(String(element.value), x + barWidth / 2, y + 8);
 
       // Draw index
-      ctx.fillStyle = "#666666";
-      ctx.font = "10px Arial";
-      ctx.fillText(`[${index}]`, x + barWidth / 2, y + 30);
+      ctx.fillStyle = "#6b7280";
+      ctx.font = "bold 11px Arial";
+      ctx.fillText(`[${index}]`, x + barWidth / 2, y + 25);
     });
 
-    // Draw description
-    ctx.fillStyle = "#000000";
-    ctx.font = "14px Arial";
+    // Draw description with background
+    ctx.fillStyle = "rgba(31, 41, 55, 0.05)";
+    ctx.fillRect(30, 10, 300, 30);
+    ctx.fillStyle = "#1f2937";
+    ctx.font = "bold 14px Arial";
     ctx.textAlign = "left";
     ctx.textBaseline = "top";
-    ctx.fillText(step.description, 50, 20);
+    ctx.fillText(step.description, 40, 18);
   }, [mounted, steps, currentStep]);
 
   if (!mounted) return null;

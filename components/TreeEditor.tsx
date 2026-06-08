@@ -60,7 +60,7 @@ export default function TreeEditor({
           <input
             type="range"
             min="1"
-            max="9"
+            max="50"
             value={nodeCount}
             onChange={(e) => onNodeCountChange(parseInt(e.target.value))}
             className="w-full cursor-pointer"

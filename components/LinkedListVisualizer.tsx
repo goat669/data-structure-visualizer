@@ -69,7 +69,7 @@ export default function LinkedListVisualizer({ algoId }: LinkedListVisualizerPro
     };
   }, [isPlaying, currentStep, steps.length, speed]);
 
-  // Draw linked list
+  // Draw linked list with colors and pointers
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas || !mounted || steps.length === 0) return;
@@ -78,62 +78,132 @@ export default function LinkedListVisualizer({ algoId }: LinkedListVisualizerPro
     if (!ctx) return;
 
     const step = steps[currentStep];
-    ctx.fillStyle = "#ffffff";
+    
+    // Gradient background
+    const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+    gradient.addColorStop(0, "#f8f9fa");
+    gradient.addColorStop(1, "#ffffff");
+    ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.strokeStyle = "#333333";
-    ctx.lineWidth = 2;
 
-    // Draw nodes
-    step.nodes.forEach((node) => {
-      const nodeRadius = 30;
-      ctx.fillStyle = 
-        node.state === "inserted" ? "#22c55e" :
-        node.state === "highlight" ? "#f59e0b" :
-        node.state === "found" ? "#3b82f6" :
-        node.state === "visited" ? "#8b5cf6" :
-        "#e5e7eb";
+    // Color palette for nodes
+    const colors: Record<string, string> = {
+      inserted: "#10b981",
+      highlight: "#f59e0b",
+      found: "#3b82f6",
+      visited: "#8b5cf6",
+      default: "#e5e7eb",
+    };
+
+    const nodeRadius = 32;
+
+    // Draw nodes with enhanced styling
+    step.nodes.forEach((node, idx) => {
+      const color = colors[node.state as keyof typeof colors] || colors.default;
+      
+      // Node circle with shadow
+      ctx.shadowColor = "rgba(0, 0, 0, 0.2)";
+      ctx.shadowBlur = 8;
+      ctx.shadowOffsetX = 2;
+      ctx.shadowOffsetY = 2;
+      
+      ctx.fillStyle = color;
       ctx.beginPath();
       ctx.arc(node.x, node.y, nodeRadius, 0, Math.PI * 2);
       ctx.fill();
+      
+      // Border
+      ctx.shadowColor = "transparent";
+      ctx.strokeStyle = color === colors.default ? "#d1d5db" : color;
+      ctx.lineWidth = 3;
       ctx.stroke();
 
-      ctx.fillStyle = "#000000";
-      ctx.font = "bold 16px Arial";
+      // Node value text
+      ctx.fillStyle = "#1f2937";
+      ctx.font = "bold 18px Arial";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.fillText(String(node.value), node.x, node.y);
     });
 
-    // Draw arrows between nodes
+    // Draw pointer labels
+    if (step.nodes.length > 0) {
+      ctx.fillStyle = "#6b7280";
+      ctx.font = "bold 11px Arial";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "bottom";
+      
+      // Head pointer for all types
+      ctx.fillText("HEAD", step.nodes[0].x, step.nodes[0].y - nodeRadius - 8);
+      
+      // Tail pointer for doubly and circular
+      if ((llType === "doubly" || llType === "circular") && step.nodes.length > 1) {
+        ctx.fillText("TAIL", step.nodes[step.nodes.length - 1].x, step.nodes[step.nodes.length - 1].y - nodeRadius - 8);
+      }
+    }
+
+    // Draw forward arrows
     for (let i = 0; i < step.nodes.length - 1; i++) {
       const from = step.nodes[i];
       const to = step.nodes[i + 1];
       
-      ctx.strokeStyle = llType === "singly" ? "#666" : "#666";
+      ctx.strokeStyle = "#3b82f6";
+      ctx.lineWidth = 2.5;
       ctx.beginPath();
-      ctx.moveTo(from.x + 35, from.y);
-      ctx.lineTo(to.x - 35, to.y);
+      ctx.moveTo(from.x + nodeRadius + 5, from.y);
+      ctx.lineTo(to.x - nodeRadius - 5, to.y);
       ctx.stroke();
 
       // Arrow head
       const angle = Math.atan2(to.y - from.y, to.x - from.x);
-      ctx.fillStyle = "#666";
+      ctx.fillStyle = "#3b82f6";
       ctx.beginPath();
-      ctx.moveTo(to.x - 35, to.y);
-      ctx.lineTo(to.x - 35 - 10 * Math.cos(angle - Math.PI / 6), to.y - 10 * Math.sin(angle - Math.PI / 6));
-      ctx.lineTo(to.x - 35 - 10 * Math.cos(angle + Math.PI / 6), to.y - 10 * Math.sin(angle + Math.PI / 6));
+      ctx.moveTo(to.x - nodeRadius - 5, to.y);
+      ctx.lineTo(to.x - nodeRadius - 15 * Math.cos(angle - Math.PI / 6), to.y - 15 * Math.sin(angle - Math.PI / 6));
+      ctx.lineTo(to.x - nodeRadius - 15 * Math.cos(angle + Math.PI / 6), to.y - 15 * Math.sin(angle + Math.PI / 6));
       ctx.closePath();
       ctx.fill();
     }
 
+    // Draw backward arrows for doubly linked list
+    if (llType === "doubly") {
+      for (let i = step.nodes.length - 1; i > 0; i--) {
+        const from = step.nodes[i];
+        const to = step.nodes[i - 1];
+        
+        ctx.strokeStyle = "#ec4899";
+        ctx.lineWidth = 2;
+        ctx.setLineDash([5, 5]);
+        ctx.beginPath();
+        ctx.moveTo(from.x - nodeRadius - 5, from.y);
+        ctx.lineTo(to.x + nodeRadius + 5, to.y);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+    }
+
     // Draw circular arrow if circular list
-    if (llType === "circular" && step.nodes.length > 0) {
+    if (llType === "circular" && step.nodes.length > 1) {
       const lastNode = step.nodes[step.nodes.length - 1];
       const firstNode = step.nodes[0];
-      ctx.strokeStyle = "#666";
+      
+      ctx.strokeStyle = "#10b981";
+      ctx.lineWidth = 2.5;
       ctx.beginPath();
-      ctx.arc(canvas.width / 2, canvas.height / 2, 200, 0, Math.PI * 2);
+      const controlX = (lastNode.x + firstNode.x) / 2;
+      const controlY = lastNode.y + 80;
+      ctx.quadraticCurveTo(controlX, controlY, firstNode.x, firstNode.y - nodeRadius - 10);
       ctx.stroke();
+
+      // Arrow head for circular
+      const angle = Math.atan2((firstNode.y - nodeRadius - 10) - controlY, firstNode.x - controlX);
+      ctx.fillStyle = "#10b981";
+      ctx.beginPath();
+      ctx.moveTo(firstNode.x, firstNode.y - nodeRadius - 10);
+      ctx.lineTo(firstNode.x - 12 * Math.cos(angle - Math.PI / 6), (firstNode.y - nodeRadius - 10) - 12 * Math.sin(angle - Math.PI / 6));
+      ctx.lineTo(firstNode.x - 12 * Math.cos(angle + Math.PI / 6), (firstNode.y - nodeRadius - 10) - 12 * Math.sin(angle + Math.PI / 6));
+      ctx.closePath();
+      ctx.fill();
     }
   }, [mounted, steps, currentStep, llType]);
 
