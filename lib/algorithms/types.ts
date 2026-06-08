@@ -1,6 +1,6 @@
 // ─── Shared ─────────────────────────────────────────────────────────────────
 
-export type AlgorithmCategory = "sorting" | "searching" | "graph" | "linked-list" | "stack" | "queue" | "tree" | "vector";
+export type AlgorithmCategory = "sorting" | "searching" | "graph" | "linked-list" | "stack" | "queue" | "tree" | "bst" | "vector";
 
 export interface AlgorithmInfo {
   id: string;
@@ -905,12 +905,12 @@ public:
 }`,
   },
 
-  // ── Binary Search Tree / AVL (now part of Tree category) ─────────────────────────
+  // ── Binary Search Tree ──────────────────────────────────────────────────────────
   {
     id: "bst-insert",
     name: "BST Insert",
-    category: "tree",
-    description: "Insert a value into a binary search tree maintaining BST property.",
+    category: "bst",
+    description: "Insert a value into a binary search tree maintaining BST property (left < parent < right).",
     timeComplexity: { best: "O(log n)", average: "O(log n)", worst: "O(n)" },
     spaceComplexity: "O(h)",
     cppCode: `TreeNode* insert(TreeNode* root, int val) {
@@ -926,8 +926,8 @@ public:
   {
     id: "bst-search",
     name: "BST Search",
-    category: "tree",
-    description: "Search for a value in a binary search tree.",
+    category: "bst",
+    description: "Search for a value in a binary search tree using divide-and-conquer approach.",
     timeComplexity: { best: "O(log n)", average: "O(log n)", worst: "O(n)" },
     spaceComplexity: "O(h)",
     cppCode: `TreeNode* search(TreeNode* root, int target) {
@@ -940,38 +940,6 @@ public:
   return search(root->right, target);
 }`,
   },
-  {
-    id: "avl-insert",
-    name: "AVL Insert & Balance",
-    category: "tree",
-    description: "Insert into an AVL tree with automatic balancing via rotations.",
-    timeComplexity: { best: "O(log n)", average: "O(log n)", worst: "O(log n)" },
-    spaceComplexity: "O(h)",
-    cppCode: `int height(AVLNode* n) {
-  return n ? n->h : 0;
-}
 
-AVLNode* rotateRight(AVLNode* y) {
-  AVLNode* x = y->left;
-  y->left = x->right;
-  x->right = y;
-  y->h = max(height(y->left), height(y->right)) + 1;
-  x->h = max(height(x->left), height(x->right)) + 1;
-  return x;
-}
-
-AVLNode* insert(AVLNode* node, int val) {
-  if (!node) return new AVLNode(val);
-  if (val < node->val)
-    node->left = insert(node->left, val);
-  else
-    node->right = insert(node->right, val);
-  node->h = max(height(node->left), height(node->right)) + 1;
-  int bal = height(node->left) - height(node->right);
-  if (bal > 1 && val < node->left->val)
-    return rotateRight(node);
-  return node;
-}`,
-  },
 ];
 

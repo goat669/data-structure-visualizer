@@ -17,8 +17,6 @@ export function runTreeAlgo(algoId: string, nodeCount: number = 7, customValues?
     return simulateBSTInsert(tree, steps);
   } else if (algoId === "bst-search") {
     return simulateBSTSearch(tree, 5, steps);
-  } else if (algoId === "avl-insert") {
-    return simulateAVLInsert(tree, steps);
   }
 
   return steps;
@@ -365,64 +363,3 @@ function simulateBSTSearch(nodes: TreeNode[], target: number, steps: TreeStep[])
   return steps;
 }
 
-function simulateAVLInsert(nodes: TreeNode[], steps: TreeStep[]): TreeStep[] {
-  let currentNodes = JSON.parse(JSON.stringify(nodes));
-
-  // Step 1: Start of AVL insert
-  steps.push({
-    nodes: currentNodes,
-    description: `AVL Tree Insert: Building balanced tree`,
-    extra: `Each node has balance factor in [-1, 0, 1]`,
-  });
-
-  // Step 2: Traverse to insertion point
-  for (let i = 0; i < Math.min(3, currentNodes.length); i++) {
-    currentNodes[i].state = "current";
-    steps.push({
-      nodes: JSON.parse(JSON.stringify(currentNodes)),
-      description: `Traversing to find insertion position (node ${i})`,
-      extra: `Following BST property: left < parent < right`,
-    });
-    currentNodes[i].state = "default";
-  }
-
-  // Step 3: Calculate balance factors
-  steps.push({
-    nodes: JSON.parse(JSON.stringify(currentNodes)),
-    description: `Calculating balance factors for all nodes`,
-    extra: `balance = height(left) - height(right)`,
-  });
-
-  // Step 4: Check for unbalanced nodes
-  const unbalancedNode = currentNodes[Math.floor(currentNodes.length / 2)];
-  if (unbalancedNode) {
-    unbalancedNode.state = "unbalanced";
-    steps.push({
-      nodes: JSON.parse(JSON.stringify(currentNodes)),
-      description: `Node ${unbalancedNode.id} is unbalanced (|balance| > 1)`,
-      extra: `Requires rotation to maintain AVL property`,
-    });
-  }
-
-  // Step 5: Perform rotation if needed
-  const needsRotation = currentNodes.length > 5;
-  if (needsRotation && unbalancedNode) {
-    unbalancedNode.state = "current";
-    steps.push({
-      nodes: JSON.parse(JSON.stringify(currentNodes)),
-      description: `Performing right rotation at node ${unbalancedNode.id}`,
-      extra: `After rotation: node becomes balanced`,
-    });
-    unbalancedNode.state = "found";
-  }
-
-  // Step 6: Final balanced state
-  currentNodes.forEach(n => n.state = n.state === "found" ? "found" : "default");
-  steps.push({
-    nodes: JSON.parse(JSON.stringify(currentNodes)),
-    description: `AVL insert complete: tree is balanced`,
-    extra: `All nodes satisfy AVL property`,
-  });
-
-  return steps;
-}

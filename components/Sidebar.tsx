@@ -19,7 +19,7 @@ const CATEGORIES: { id: AlgorithmCategory; label: string; color: string; icon: s
   { id: "stack",       label: "Stack",       color: "#4ade80", icon: "stack"  },
   { id: "queue",       label: "Queue",       color: "#06b6d4", icon: "queue"  },
   { id: "tree",        label: "Tree",        color: "#f59e0b", icon: "tree"   },
-  { id: "binary-tree", label: "Binary Tree", color: "#8b5cf6", icon: "bst"    },
+  { id: "bst",         label: "Binary Search Tree", color: "#8b5cf6", icon: "bst"    },
   { id: "vector",      label: "Vector",      color: "#14b8a6", icon: "vector" },
 ];
 

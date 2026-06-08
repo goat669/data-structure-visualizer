@@ -29,11 +29,11 @@ export default function LinkedListVisualizer({
   const animationRef = useRef<number>();
 
   // Configuration
-  const [listSize, setListSize] = useState(7);
+  const [listSize, setListSize] = useState(10);
   const [position, setPosition] = useState(2);
   const [insertValue, setInsertValue] = useState(20);
   const [searchValue, setSearchValue] = useState(15);
-  const [customValues, setCustomValues] = useState<string>("10,20,30,40,50,60,70");
+  const [customValues, setCustomValues] = useState<string>("10,20,30,40,50,60,70,80,90,100");
   const [useCustom, setUseCustom] = useState(false);
 
   // Generate initial random values or parse custom values
@@ -43,7 +43,7 @@ export default function LinkedListVisualizer({
         .split(",")
         .map((v) => parseInt(v.trim()))
         .filter((v) => !isNaN(v))
-        .slice(0, 20);
+        .slice(0, 30);
     }
     return Array.from({ length: listSize }, () =>
       Math.floor(Math.random() * 100) + 1
@@ -316,7 +316,7 @@ export default function LinkedListVisualizer({
             <input
               type="range"
               min="3"
-              max="10"
+              max="15"
               value={listSize}
               onChange={(e) => setListSize(parseInt(e.target.value))}
               className="w-full"
