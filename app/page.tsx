@@ -8,6 +8,7 @@ import GraphVisualizer from "@/components/GraphVisualizer";
 import LinkedListVisualizer from "@/components/LinkedListVisualizer";
 import TreeVisualizer from "@/components/TreeVisualizer";
 import StackQueueVisualizer from "@/components/StackQueueVisualizer";
+import VectorVisualizer from "@/components/VectorVisualizer";
 
 function VisualizerRouter({ algoId }: { algoId: string }) {
   const algo = ALGORITHMS.find((a) => a.id === algoId);
@@ -24,6 +25,9 @@ function VisualizerRouter({ algoId }: { algoId: string }) {
   }
   if (algo.category === "stack" || algo.category === "queue") {
     return <StackQueueVisualizer key={algoId} algoId={algoId} />;
+  }
+  if (algo.category === "vector") {
+    return <VectorVisualizer key={algoId} algoId={algoId} />;
   }
   // sorting + searching
   return <Visualizer key={algoId} algoId={algoId} />;

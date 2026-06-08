@@ -1,6 +1,6 @@
 // ─── Shared ─────────────────────────────────────────────────────────────────
 
-export type AlgorithmCategory = "sorting" | "searching" | "graph" | "linked-list" | "stack" | "queue" | "tree" | "binary-tree";
+export type AlgorithmCategory = "sorting" | "searching" | "graph" | "linked-list" | "stack" | "queue" | "tree" | "binary-tree" | "vector";
 
 export interface AlgorithmInfo {
   id: string;
@@ -666,6 +666,169 @@ public:
   int front() { return arr.empty() ? -1 : arr.front(); }
   bool isEmpty() { return arr.empty(); }
 };`,
+  },
+
+  // ── Singly Linked List ───────────────────────────────────────────────────────
+  {
+    id: "sll-insert",
+    name: "Singly LL - Insert",
+    category: "linked-list",
+    description: "Insert a node at any position in a singly linked list",
+    timeComplexity: { best: "O(1)", average: "O(n)", worst: "O(n)" },
+    spaceComplexity: "O(1)",
+    cppCode: `Node* insertAtPos(Node* head, int pos, int val) {
+  if (pos == 0) { Node* n = new Node(val); n->next = head; return n; }
+  Node* curr = head;
+  for (int i = 0; i < pos - 1 && curr; i++) curr = curr->next;
+  if (curr) { Node* n = new Node(val); n->next = curr->next; curr->next = n; }
+  return head;
+}`,
+  },
+  {
+    id: "sll-find",
+    name: "Singly LL - Find",
+    category: "linked-list",
+    description: "Search for a value in a singly linked list",
+    timeComplexity: { best: "O(1)", average: "O(n)", worst: "O(n)" },
+    spaceComplexity: "O(1)",
+    cppCode: `Node* find(Node* head, int target) {
+  while (head) { if (head->val == target) return head; head = head->next; }
+  return nullptr;
+}`,
+  },
+  {
+    id: "sll-delete",
+    name: "Singly LL - Delete",
+    category: "linked-list",
+    description: "Delete a node at any position in a singly linked list",
+    timeComplexity: { best: "O(1)", average: "O(n)", worst: "O(n)" },
+    spaceComplexity: "O(1)",
+    cppCode: `Node* deleteAtPos(Node* head, int pos) {
+  if (pos == 0 && head) { Node* t = head; head = head->next; delete t; return head; }
+  Node* curr = head;
+  for (int i = 0; i < pos - 1 && curr; i++) curr = curr->next;
+  if (curr && curr->next) { Node* t = curr->next; curr->next = t->next; delete t; }
+  return head;
+}`,
+  },
+
+  // ── Doubly Linked List ────────────────────────────────────────────────────────
+  {
+    id: "dll-insert",
+    name: "Doubly LL - Insert",
+    category: "linked-list",
+    description: "Insert a node at any position in a doubly linked list",
+    timeComplexity: { best: "O(1)", average: "O(n)", worst: "O(n)" },
+    spaceComplexity: "O(1)",
+    cppCode: `DNode* insertAtPos(DNode* head, int pos, int val) {
+  if (pos == 0) { DNode* n = new DNode(val); n->next = head; if (head) head->prev = n; return n; }
+  DNode* curr = head;
+  for (int i = 0; i < pos - 1 && curr; i++) curr = curr->next;
+  if (curr) { DNode* n = new DNode(val); n->next = curr->next; n->prev = curr; if (curr->next) curr->next->prev = n; curr->next = n; }
+  return head;
+}`,
+  },
+  {
+    id: "dll-find",
+    name: "Doubly LL - Find",
+    category: "linked-list",
+    description: "Search for a value in a doubly linked list",
+    timeComplexity: { best: "O(1)", average: "O(n)", worst: "O(n)" },
+    spaceComplexity: "O(1)",
+    cppCode: `DNode* find(DNode* head, int target) {
+  while (head) { if (head->val == target) return head; head = head->next; }
+  return nullptr;
+}`,
+  },
+  {
+    id: "dll-delete",
+    name: "Doubly LL - Delete",
+    category: "linked-list",
+    description: "Delete a node at any position in a doubly linked list",
+    timeComplexity: { best: "O(1)", average: "O(n)", worst: "O(n)" },
+    spaceComplexity: "O(1)",
+    cppCode: `DNode* deleteAtPos(DNode* head, int pos) {
+  if (pos == 0 && head) { DNode* t = head; head = head->next; if (head) head->prev = nullptr; delete t; return head; }
+  DNode* curr = head;
+  for (int i = 0; i < pos - 1 && curr; i++) curr = curr->next;
+  if (curr && curr->next) { DNode* t = curr->next; curr->next = t->next; if (t->next) t->next->prev = curr; delete t; }
+  return head;
+}`,
+  },
+
+  // ── Circular Linked List ──────────────────────────────────────────────────────
+  {
+    id: "cll-insert",
+    name: "Circular LL - Insert",
+    category: "linked-list",
+    description: "Insert a node at any position in a circular linked list",
+    timeComplexity: { best: "O(1)", average: "O(n)", worst: "O(n)" },
+    spaceComplexity: "O(1)",
+    cppCode: `Node* insertAtPos(Node* head, int pos, int val) {
+  Node* n = new Node(val);
+  if (!head) { n->next = n; return n; }
+  if (pos == 0) { n->next = head; Node* tail = head; while (tail->next != head) tail = tail->next; tail->next = n; return n; }
+  Node* curr = head;
+  for (int i = 0; i < pos - 1; i++) { curr = curr->next; if (curr->next == head) break; }
+  n->next = curr->next; curr->next = n;
+  return head;
+}`,
+  },
+  {
+    id: "cll-find",
+    name: "Circular LL - Find",
+    category: "linked-list",
+    description: "Search for a value in a circular linked list",
+    timeComplexity: { best: "O(1)", average: "O(n)", worst: "O(n)" },
+    spaceComplexity: "O(1)",
+    cppCode: `Node* find(Node* head, int target) {
+  if (!head) return nullptr;
+  Node* curr = head;
+  do { if (curr->val == target) return curr; curr = curr->next; } while (curr != head);
+  return nullptr;
+}`,
+  },
+  {
+    id: "cll-delete",
+    name: "Circular LL - Delete",
+    category: "linked-list",
+    description: "Delete a node at any position in a circular linked list",
+    timeComplexity: { best: "O(1)", average: "O(n)", worst: "O(n)" },
+    spaceComplexity: "O(1)",
+    cppCode: `Node* deleteAtPos(Node* head, int pos) {
+  if (!head || head->next == head) return nullptr;
+  if (pos == 0) { Node* tail = head; while (tail->next != head) tail = tail->next; Node* t = head; head = head->next; tail->next = head; delete t; return head; }
+  Node* curr = head;
+  for (int i = 0; i < pos - 1; i++) { curr = curr->next; if (curr->next == head) break; }
+  if (curr->next != head) { Node* t = curr->next; curr->next = t->next; delete t; }
+  return head;
+}`,
+  },
+
+  // ── Vector ────────────────────────────────────────────────────────────────────
+  {
+    id: "vector-insert",
+    name: "Vector - Insert",
+    category: "vector",
+    description: "Insert an element at any position in a vector/dynamic array",
+    timeComplexity: { best: "O(1)", average: "O(n)", worst: "O(n)" },
+    spaceComplexity: "O(n)",
+    cppCode: `void insertAtPos(vector<int>& v, int pos, int val) {
+  if (pos < 0 || pos > v.size()) return;
+  v.insert(v.begin() + pos, val);
+}`,
+  },
+  {
+    id: "vector-delete",
+    name: "Vector - Delete",
+    category: "vector",
+    description: "Delete an element at any position in a vector/dynamic array",
+    timeComplexity: { best: "O(1)", average: "O(n)", worst: "O(n)" },
+    spaceComplexity: "O(1)",
+    cppCode: `void deleteAtPos(vector<int>& v, int pos) {
+  if (pos < 0 || pos >= v.size()) return;
+  v.erase(v.begin() + pos);
+}`,
   },
 
   // ── Tree ────────────────────────────────────────────────────────────────────

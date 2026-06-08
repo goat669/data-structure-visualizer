@@ -1,51 +1,38 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { LinkedListStep } from "@/lib/algorithms/types";
-import { runLinkedListAlgo } from "@/lib/algorithms/linkedlist";
+import { SortStep } from "@/lib/algorithms/types";
+import { runVectorAlgo } from "@/lib/algorithms/vector";
 import PlaybackControls from "./PlaybackControls";
 import StatsPanel from "./StatsPanel";
 
-interface LinkedListVisualizerProps {
+interface VectorVisualizerProps {
   algoId: string;
 }
 
-export default function LinkedListVisualizer({ algoId }: LinkedListVisualizerProps) {
+export default function VectorVisualizer({ algoId }: VectorVisualizerProps) {
   const [mounted, setMounted] = useState(false);
-  const [llType, setLlType] = useState<"singly" | "doubly" | "circular">("singly");
-  const [operation, setOperation] = useState<"insert" | "find" | "delete">("insert");
+  const [operation, setOperation] = useState<"insert" | "delete">("insert");
   const [values, setValues] = useState<number[]>([10, 20, 30, 40, 50]);
   const [position, setPosition] = useState(2);
   const [value, setValue] = useState(99);
-  const [steps, setSteps] = useState<LinkedListStep[]>([]);
+  const [steps, setSteps] = useState<SortStep[]>([]);
   const [currentStep, setCurrentStep] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [speed, setSpeed] = useState(2);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Determine type and operation from algoId
   useEffect(() => {
-    if (algoId.startsWith("sll")) setLlType("singly");
-    else if (algoId.startsWith("dll")) setLlType("doubly");
-    else if (algoId.startsWith("cll")) setLlType("circular");
-    
-    if (algoId.includes("insert")) setOperation("insert");
-    else if (algoId.includes("find")) setOperation("find");
-    else if (algoId.includes("delete")) setOperation("delete");
-  }, [algoId]);
+    setMounted(true);
+  }, []);
 
   const recompute = useCallback(() => {
     stopPlayback();
-    const s = runLinkedListAlgo(algoId, values, operation, position, value, llType);
+    const s = runVectorAlgo(algoId, values, operation, position, value);
     setSteps(s);
     setCurrentStep(0);
-  }, [algoId, values, operation, position, value, llType]);
-
-  useEffect(() => {
-    setMounted(true);
-    recompute();
-  }, []);
+  }, [algoId, values, operation, position, value]);
 
   const stopPlayback = () => {
     setIsPlaying(false);
@@ -69,7 +56,7 @@ export default function LinkedListVisualizer({ algoId }: LinkedListVisualizerPro
     };
   }, [isPlaying, currentStep, steps.length, speed]);
 
-  // Draw linked list
+  // Draw vector
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas || !mounted || steps.length === 0) return;
@@ -80,62 +67,49 @@ export default function LinkedListVisualizer({ algoId }: LinkedListVisualizerPro
     const step = steps[currentStep];
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.strokeStyle = "#333333";
-    ctx.lineWidth = 2;
 
-    // Draw nodes
-    step.nodes.forEach((node) => {
-      const nodeRadius = 30;
-      ctx.fillStyle = 
-        node.state === "inserted" ? "#22c55e" :
-        node.state === "highlight" ? "#f59e0b" :
-        node.state === "found" ? "#3b82f6" :
-        node.state === "visited" ? "#8b5cf6" :
-        "#e5e7eb";
-      ctx.beginPath();
-      ctx.arc(node.x, node.y, nodeRadius, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.stroke();
+    const barWidth = 40;
+    const barHeight = 120;
+    const gap = 10;
+    const startX = 50;
+    const startY = 150;
 
+    step.array.forEach((element, index) => {
+      const x = startX + index * (barWidth + gap);
+      const y = startY;
+      const height = (element.value / 50) * barHeight;
+
+      // Draw bar
+      ctx.fillStyle =
+        element.state === "sorted" ? "#22c55e" :
+        element.state === "comparing" ? "#f59e0b" :
+        element.state === "swapping" ? "#ef4444" :
+        "#3b82f6";
+      ctx.fillRect(x, y - height, barWidth, height);
+      ctx.strokeStyle = "#000000";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(x, y - height, barWidth, height);
+
+      // Draw value
       ctx.fillStyle = "#000000";
-      ctx.font = "bold 16px Arial";
+      ctx.font = "bold 12px Arial";
       ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText(String(node.value), node.x, node.y);
+      ctx.textBaseline = "top";
+      ctx.fillText(String(element.value), x + barWidth / 2, y + 10);
+
+      // Draw index
+      ctx.fillStyle = "#666666";
+      ctx.font = "10px Arial";
+      ctx.fillText(`[${index}]`, x + barWidth / 2, y + 30);
     });
 
-    // Draw arrows between nodes
-    for (let i = 0; i < step.nodes.length - 1; i++) {
-      const from = step.nodes[i];
-      const to = step.nodes[i + 1];
-      
-      ctx.strokeStyle = llType === "singly" ? "#666" : "#666";
-      ctx.beginPath();
-      ctx.moveTo(from.x + 35, from.y);
-      ctx.lineTo(to.x - 35, to.y);
-      ctx.stroke();
-
-      // Arrow head
-      const angle = Math.atan2(to.y - from.y, to.x - from.x);
-      ctx.fillStyle = "#666";
-      ctx.beginPath();
-      ctx.moveTo(to.x - 35, to.y);
-      ctx.lineTo(to.x - 35 - 10 * Math.cos(angle - Math.PI / 6), to.y - 10 * Math.sin(angle - Math.PI / 6));
-      ctx.lineTo(to.x - 35 - 10 * Math.cos(angle + Math.PI / 6), to.y - 10 * Math.sin(angle + Math.PI / 6));
-      ctx.closePath();
-      ctx.fill();
-    }
-
-    // Draw circular arrow if circular list
-    if (llType === "circular" && step.nodes.length > 0) {
-      const lastNode = step.nodes[step.nodes.length - 1];
-      const firstNode = step.nodes[0];
-      ctx.strokeStyle = "#666";
-      ctx.beginPath();
-      ctx.arc(canvas.width / 2, canvas.height / 2, 200, 0, Math.PI * 2);
-      ctx.stroke();
-    }
-  }, [mounted, steps, currentStep, llType]);
+    // Draw description
+    ctx.fillStyle = "#000000";
+    ctx.font = "14px Arial";
+    ctx.textAlign = "left";
+    ctx.textBaseline = "top";
+    ctx.fillText(step.description, 50, 20);
+  }, [mounted, steps, currentStep]);
 
   if (!mounted) return null;
 
@@ -144,49 +118,31 @@ export default function LinkedListVisualizer({ algoId }: LinkedListVisualizerPro
 
   return (
     <div className="w-full h-full flex flex-col gap-4 p-6">
-      {/* Type and Operation Buttons */}
-      <div className="flex flex-wrap gap-2">
-        <div className="flex gap-1 bg-card border border-border rounded-lg p-2">
-          {(["singly", "doubly", "circular"] as const).map((type) => (
-            <button
-              key={type}
-              onClick={() => setLlType(type)}
-              className={`px-3 py-1 rounded text-sm font-mono transition-colors ${
-                llType === type
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-background text-foreground hover:bg-border"
-              }`}
-            >
-              {type === "singly" ? "Singly" : type === "doubly" ? "Doubly" : "Circular"}
-            </button>
-          ))}
-        </div>
-
-        <div className="flex gap-1 bg-card border border-border rounded-lg p-2">
-          {(["insert", "find", "delete"] as const).map((op) => (
-            <button
-              key={op}
-              onClick={() => {
-                setOperation(op);
-                setCurrentStep(0);
-              }}
-              className={`px-3 py-1 rounded text-sm font-mono transition-colors capitalize ${
-                operation === op
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-background text-foreground hover:bg-border"
-              }`}
-            >
-              {op}
-            </button>
-          ))}
-        </div>
+      {/* Operation Buttons */}
+      <div className="flex gap-1 bg-card border border-border rounded-lg p-2">
+        {(["insert", "delete"] as const).map((op) => (
+          <button
+            key={op}
+            onClick={() => {
+              setOperation(op);
+              setCurrentStep(0);
+            }}
+            className={`px-3 py-1 rounded text-sm font-mono transition-colors capitalize ${
+              operation === op
+                ? "bg-primary text-primary-foreground"
+                : "bg-background text-foreground hover:bg-border"
+            }`}
+          >
+            {op}
+          </button>
+        ))}
       </div>
 
       {/* Canvas */}
       <canvas
         ref={canvasRef}
         width={800}
-        height={200}
+        height={250}
         className="border border-border rounded-lg bg-white"
       />
 
@@ -205,9 +161,9 @@ export default function LinkedListVisualizer({ algoId }: LinkedListVisualizerPro
       <div className="bg-card border border-border rounded-lg p-4 space-y-3 max-h-80 overflow-y-auto">
         <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest">Configure</span>
         
-        {/* List values */}
+        {/* Array values */}
         <div>
-          <label className="text-xs font-mono text-muted-foreground block mb-1">List values</label>
+          <label className="text-xs font-mono text-muted-foreground block mb-1">Array values</label>
           <input
             type="text"
             value={values.join(", ")}
@@ -239,19 +195,6 @@ export default function LinkedListVisualizer({ algoId }: LinkedListVisualizerPro
         {operation === "insert" && (
           <div>
             <label className="text-xs font-mono text-muted-foreground block mb-1">Insert value</label>
-            <input
-              type="number"
-              value={value}
-              onChange={(e) => setValue(parseInt(e.target.value) || 0)}
-              className="w-full px-3 py-2 bg-background border border-border rounded text-sm font-mono"
-            />
-          </div>
-        )}
-
-        {/* Find value */}
-        {operation === "find" && (
-          <div>
-            <label className="text-xs font-mono text-muted-foreground block mb-1">Search value</label>
             <input
               type="number"
               value={value}
@@ -297,8 +240,8 @@ export default function LinkedListVisualizer({ algoId }: LinkedListVisualizerPro
 
       {/* Stats */}
       <StatsPanel
-        comparisons={0}
-        swaps={0}
+        comparisons={currentStepData?.comparisons || 0}
+        swaps={currentStepData?.swaps || 0}
         currentStep={currentStep}
         totalSteps={steps.length}
         description={currentStepData?.description || ""}

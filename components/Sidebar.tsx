@@ -20,6 +20,7 @@ const CATEGORIES: { id: AlgorithmCategory; label: string; color: string; icon: s
   { id: "queue",       label: "Queue",       color: "#06b6d4", icon: "queue"  },
   { id: "tree",        label: "Tree",        color: "#f59e0b", icon: "tree"   },
   { id: "binary-tree", label: "Binary Tree", color: "#8b5cf6", icon: "bst"    },
+  { id: "vector",      label: "Vector",      color: "#14b8a6", icon: "vector" },
 ];
 
 function complexityColor(worst: string): string {
@@ -101,6 +102,13 @@ function CategoryIcon({ type, color }: { type: string; color: string }) {
       <circle cx="10.5" cy="10" r="0.7" fill={color} opacity="0.7" />
       <line x1="5.7" y1="2.8" x2="3.3" y2="5.2" stroke={color} strokeWidth="1" opacity="0.6" />
       <line x1="6.3" y1="2.8" x2="8.7" y2="5.2" stroke={color} strokeWidth="1" opacity="0.6" />
+    </svg>
+  );
+  if (type === "vector") return (
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden>
+      <rect x="1" y="2" width="2" height="8" rx="0.4" fill={color} />
+      <rect x="4.5" y="1" width="2" height="9" rx="0.4" fill={color} opacity="0.8" />
+      <rect x="8" y="3" width="2" height="7" rx="0.4" fill={color} opacity="0.6" />
     </svg>
   );
   // fallback

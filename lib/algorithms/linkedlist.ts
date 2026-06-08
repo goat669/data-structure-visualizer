@@ -1,141 +1,153 @@
-import { LinkedListNode, LinkedListStep } from "./types";
+import { LinkedListStep } from "./types";
 
-export type LinkedListType = "singly" | "doubly" | "circular";
+interface LLNode {
+  id: number;
+  value: number;
+}
 
 export function runLinkedListAlgo(
   algoId: string,
-  values: number[],
-  insertValue: number,
-  insertPosition: number,
-  type: LinkedListType = "singly"
+  initialValues: number[],
+  operation: "insert" | "find" | "delete",
+  position: number,
+  value: number,
+  llType: "singly" | "doubly" | "circular"
 ): LinkedListStep[] {
   const steps: LinkedListStep[] = [];
-
-  if (algoId === "ll-insert") {
-    return simulateInsert(values, insertValue, insertPosition, steps, type);
-  } else if (algoId === "ll-search") {
-    return simulateSearch(values, insertValue, steps, type);
+  
+  if (operation === "insert") {
+    return generateInsertSteps(initialValues, position, value, llType);
+  } else if (operation === "find") {
+    return generateFindSteps(initialValues, value, llType);
+  } else if (operation === "delete") {
+    return generateDeleteSteps(initialValues, position, llType);
   }
-
+  
   return steps;
 }
 
-function createNodes(values: number[], type: LinkedListType): LinkedListNode[] {
-  return values.map((val, idx) => ({
-    id: idx,
-    value: val,
-    x: 100 + idx * 120,
-    y: 150,
-    state: "default" as const,
-  }));
-}
-
-function getTypeInfo(type: LinkedListType): string {
-  if (type === "singly") return "Singly Linked List (single direction)";
-  if (type === "doubly") return "Doubly Linked List (bidirectional)";
-  if (type === "circular") return "Circular Linked List (loops back)";
-  return "";
-}
-
-function simulateInsert(
+function generateInsertSteps(
   values: number[],
-  insertValue: number,
-  insertPos: number,
-  steps: LinkedListStep[],
-  type: LinkedListType
+  position: number,
+  value: number,
+  llType: string
 ): LinkedListStep[] {
-  let nodes: LinkedListNode[] = createNodes(values, type);
-  const pos = Math.min(Math.max(0, insertPos), nodes.length);
-
+  const steps: LinkedListStep[] = [];
+  
+  // Step 0: Show original list
   steps.push({
-    nodes: JSON.parse(JSON.stringify(nodes)),
-    description: `> ${getTypeInfo(type)}: Insert ${insertValue} at position ${pos}`,
+    nodes: values.map((v, i) => ({
+      id: i,
+      value: v,
+      x: 100 + i * 80,
+      y: 100,
+      state: "default" as const,
+      nextArrow: "default" as const,
+    })),
+    description: `Inserting ${value} at position ${Math.min(position, values.length)}`,
+    extra: `Original list: [${values.join(", ")}]`,
   });
 
-  // Traverse to insertion point
-  for (let i = 0; i < pos && i < nodes.length; i++) {
-    nodes[i].state = "current";
-    steps.push({
-      nodes: JSON.parse(JSON.stringify(nodes)),
-      description: `> Traverse to position ${i}`,
-      extra: `Current node: ${nodes[i].value}`,
-    });
-    nodes[i].state = "default";
-  }
-
-  // Create new node
-  const newNode: LinkedListNode = {
-    id: nodes.length,
-    value: insertValue,
-    x: 100 + pos * 120,
-    y: 150,
-    state: "inserted",
-  };
-
-  // Insert new node
-  nodes.splice(pos, 0, newNode);
-
+  // Step 1: Show insertion position
+  const clampedPos = Math.min(Math.max(0, position), values.length);
+  const newValues = [...values.slice(0, clampedPos), value, ...values.slice(clampedPos)];
+  
   steps.push({
-    nodes: JSON.parse(JSON.stringify(nodes)),
-    description: `> Inserted ${insertValue} at position ${pos}`,
-    extra: `${type === "circular" ? "Circular link updated" : "Pointers updated"}`,
-  });
-
-  // Mark as visited
-  nodes[pos].state = "visited";
-  steps.push({
-    nodes: JSON.parse(JSON.stringify(nodes)),
-    description: `> Insertion complete`,
-    extra: `New list has ${nodes.length} nodes`,
+    nodes: newValues.map((v, i) => ({
+      id: i,
+      value: v,
+      x: 100 + i * 80,
+      y: 100,
+      state: i === clampedPos ? "inserted" : i < clampedPos ? "default" : "default",
+      nextArrow: "default" as const,
+    })),
+    description: `Successfully inserted ${value} at position ${clampedPos}`,
+    extra: `New list: [${newValues.join(", ")}]`,
   });
 
   return steps;
 }
 
-function simulateSearch(
+function generateFindSteps(
   values: number[],
   target: number,
-  steps: LinkedListStep[],
-  type: LinkedListType
+  llType: string
 ): LinkedListStep[] {
-  let nodes: LinkedListNode[] = createNodes(values, type);
+  const steps: LinkedListStep[] = [];
+  
+  const foundIndex = values.indexOf(target);
+  
+  for (let i = 0; i <= Math.min(foundIndex === -1 ? values.length : foundIndex, values.length); i++) {
+    steps.push({
+      nodes: values.map((v, idx) => ({
+        id: idx,
+        value: v,
+        x: 100 + idx * 80,
+        y: 100,
+        state: idx === foundIndex && foundIndex !== -1 ? "found" : idx < i ? "visited" : "default",
+        nextArrow: "default" as const,
+      })),
+      description: i === foundIndex && foundIndex !== -1 ? `Found ${target} at position ${foundIndex}` : `Searching for ${target}...`,
+      extra: foundIndex === -1 ? "Value not found in list" : `Found at index ${foundIndex}`,
+    });
+  }
 
+  if (foundIndex === -1) {
+    steps.push({
+      nodes: values.map((v, idx) => ({
+        id: idx,
+        value: v,
+        x: 100 + idx * 80,
+        y: 100,
+        state: "default" as const,
+        nextArrow: "default" as const,
+      })),
+      description: `${target} not found in list`,
+      extra: "Search completed",
+    });
+  }
+
+  return steps;
+}
+
+function generateDeleteSteps(
+  values: number[],
+  position: number,
+  llType: string
+): LinkedListStep[] {
+  const steps: LinkedListStep[] = [];
+  
+  const clampedPos = Math.min(Math.max(0, position), values.length - 1);
+  
+  // Step 0: Show original list with deletion target
   steps.push({
-    nodes: JSON.parse(JSON.stringify(nodes)),
-    description: `> ${getTypeInfo(type)}: Search for ${target}`,
+    nodes: values.map((v, i) => ({
+      id: i,
+      value: v,
+      x: 100 + i * 80,
+      y: 100,
+      state: i === clampedPos ? "highlight" : "default",
+      nextArrow: "default" as const,
+    })),
+    description: `Deleting element at position ${clampedPos} (value: ${values[clampedPos]})`,
+    extra: `Original list: [${values.join(", ")}]`,
   });
 
-  let found = false;
-  for (let i = 0; i < nodes.length; i++) {
-    nodes[i].state = "current";
-    steps.push({
-      nodes: JSON.parse(JSON.stringify(nodes)),
-      description: `> Checking node ${i}: value ${nodes[i].value}`,
-      extra: `Position: ${i}`,
-    });
-
-    if (nodes[i].value === target) {
-      nodes[i].state = "found";
-      steps.push({
-        nodes: JSON.parse(JSON.stringify(nodes)),
-        description: `> Found ${target} at position ${i}`,
-        extra: `Search successful`,
-      });
-      found = true;
-      break;
-    }
-    nodes[i].state = "visited";
-
-    if (type === "circular" && i > values.length) break;
-  }
-
-  if (!found) {
-    steps.push({
-      nodes: JSON.parse(JSON.stringify(nodes)),
-      description: `> Value ${target} not found in list`,
-      extra: `Searched all ${nodes.length} nodes`,
-    });
-  }
+  // Step 1: Show list after deletion
+  const newValues = values.filter((_, i) => i !== clampedPos);
+  
+  steps.push({
+    nodes: newValues.map((v, i) => ({
+      id: i,
+      value: v,
+      x: 100 + i * 80,
+      y: 100,
+      state: "default" as const,
+      nextArrow: "default" as const,
+    })),
+    description: `Successfully deleted element at position ${clampedPos}`,
+    extra: `New list: [${newValues.join(", ")}]`,
+  });
 
   return steps;
 }
