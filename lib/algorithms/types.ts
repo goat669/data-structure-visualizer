@@ -1,6 +1,6 @@
 // ─── Shared ─────────────────────────────────────────────────────────────────
 
-export type AlgorithmCategory = "sorting" | "searching" | "graph" | "linked-list" | "stack" | "queue" | "tree" | "bst" | "vector";
+export type AlgorithmCategory = "sorting" | "searching" | "graph" | "linked-list" | "stack" | "queue" | "tree" | "vector";
 
 export interface AlgorithmInfo {
   id: string;
@@ -941,45 +941,6 @@ public:
   postorder(root->right, result);
   result.push_back(root->val);
   return result;
-}`,
-  },
-
-  // ── Binary Search Tree ──────────────────────────────────────────────────────────────
-  {
-    id: "bst-insert",
-    name: "BST Insert",
-    category: "bst",
-    description: "Insert values into a binary search tree maintaining BST property: all left < node < all right. Both subtrees must also be valid BSTs.",
-    timeComplexity: { best: "O(log n)", average: "O(log n)", worst: "O(n)" },
-    spaceComplexity: "O(h)",
-    cppCode: `struct TreeNode {
-  int val;
-  TreeNode *left, *right;
-  TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}
-};
-
-TreeNode* insert(TreeNode* root, int val) {
-  if (!root) return new TreeNode(val);
-  if (val < root->val)
-    root->left = insert(root->left, val);
-  else
-    root->right = insert(root->right, val);
-  return root;
-}`,
-  },
-  {
-    id: "bst-search",
-    name: "BST Search",
-    category: "bst",
-    description: "Search for a value in BST. Use the BST property to eliminate half the tree at each step.",
-    timeComplexity: { best: "O(log n)", average: "O(log n)", worst: "O(n)" },
-    spaceComplexity: "O(h)",
-    cppCode: `TreeNode* search(TreeNode* root, int target) {
-  if (!root) return nullptr;
-  if (root->val == target) return root;
-  if (target < root->val)
-    return search(root->left, target);
-  return search(root->right, target);
 }`,
   },
 
