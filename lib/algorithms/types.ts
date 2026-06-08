@@ -1,6 +1,6 @@
 // ─── Shared ─────────────────────────────────────────────────────────────────
 
-export type AlgorithmCategory = "sorting" | "searching" | "graph" | "linked-list" | "stack" | "queue" | "tree" | "binary-tree" | "vector";
+export type AlgorithmCategory = "sorting" | "searching" | "graph" | "linked-list" | "stack" | "queue" | "tree" | "vector";
 
 export interface AlgorithmInfo {
   id: string;
@@ -905,11 +905,11 @@ public:
 }`,
   },
 
-  // ── Binary Tree / BST ───────────────────────────────────────────────────────
+  // ── Binary Search Tree / AVL (now part of Tree category) ─────────────────────────
   {
     id: "bst-insert",
     name: "BST Insert",
-    category: "binary-tree",
+    category: "tree",
     description: "Insert a value into a binary search tree maintaining BST property.",
     timeComplexity: { best: "O(log n)", average: "O(log n)", worst: "O(n)" },
     spaceComplexity: "O(h)",
@@ -926,7 +926,7 @@ public:
   {
     id: "bst-search",
     name: "BST Search",
-    category: "binary-tree",
+    category: "tree",
     description: "Search for a value in a binary search tree.",
     timeComplexity: { best: "O(log n)", average: "O(log n)", worst: "O(n)" },
     spaceComplexity: "O(h)",
@@ -943,7 +943,7 @@ public:
   {
     id: "avl-insert",
     name: "AVL Insert & Balance",
-    category: "binary-tree",
+    category: "tree",
     description: "Insert into an AVL tree with automatic balancing via rotations.",
     timeComplexity: { best: "O(log n)", average: "O(log n)", worst: "O(log n)" },
     spaceComplexity: "O(h)",

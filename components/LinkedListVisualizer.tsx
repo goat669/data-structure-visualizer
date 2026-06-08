@@ -207,6 +207,7 @@ export default function LinkedListVisualizer({
     }
 
     // Draw circular arrow
+    // Draw circular loop (tail -> head)
     if (llType === "circular" && step.nodes.length > 1) {
       const lastNode = step.nodes[step.nodes.length - 1];
       const firstNode = step.nodes[0];
@@ -214,18 +215,32 @@ export default function LinkedListVisualizer({
       ctx.strokeStyle = "#10b981";
       ctx.lineWidth = 2.5;
       ctx.beginPath();
-      const controlX = (lastNode.x + firstNode.x) / 2;
-      const controlY = lastNode.y + 80;
-      ctx.quadraticCurveTo(controlX, controlY, firstNode.x, firstNode.y - nodeRadius - 15);
+      
+      // Start from right side of last node
+      ctx.moveTo(lastNode.x + nodeRadius + 5, lastNode.y);
+      
+      // Curve down and around to approach head from below
+      const curveBottomY = Math.max(lastNode.y, firstNode.y) + 100;
+      const controlX1 = lastNode.x + 60;
+      const controlX2 = firstNode.x - 60;
+      
+      ctx.bezierCurveTo(
+        controlX1, lastNode.y + 40,
+        controlX2, curveBottomY - 40,
+        firstNode.x, firstNode.y + nodeRadius + 15
+      );
       ctx.stroke();
 
-      // Arrow head
-      const angle = Math.atan2((firstNode.y - nodeRadius - 15) - controlY, firstNode.x - controlX);
+      // Arrow head pointing up into HEAD node
+      const endX = firstNode.x;
+      const endY = firstNode.y + nodeRadius + 15;
+      const angle = -Math.PI / 2; // pointing upward
+      
       ctx.fillStyle = "#10b981";
       ctx.beginPath();
-      ctx.moveTo(firstNode.x, firstNode.y - nodeRadius - 15);
-      ctx.lineTo(firstNode.x - 10 * Math.cos(angle - Math.PI / 6), (firstNode.y - nodeRadius - 15) - 10 * Math.sin(angle - Math.PI / 6));
-      ctx.lineTo(firstNode.x - 10 * Math.cos(angle + Math.PI / 6), (firstNode.y - nodeRadius - 15) - 10 * Math.sin(angle + Math.PI / 6));
+      ctx.moveTo(endX, endY);
+      ctx.lineTo(endX - 10 * Math.cos(angle - Math.PI / 6), endY - 10 * Math.sin(angle - Math.PI / 6));
+      ctx.lineTo(endX - 10 * Math.cos(angle + Math.PI / 6), endY - 10 * Math.sin(angle + Math.PI / 6));
       ctx.closePath();
       ctx.fill();
     }

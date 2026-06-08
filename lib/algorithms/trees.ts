@@ -34,12 +34,22 @@ function createSampleBinaryTree(count: number, customValues?: number[]): TreeNod
     nodeValues = [4, 2, 6, 1, 3, 5, 7, 8, 9].slice(0, Math.max(1, count));
   }
 
+  const maxDepth = Math.ceil(Math.log2(nodeValues.length + 1));
+  const levelWidth = Math.pow(2, maxDepth);
+  const horizontalSpacing = 120;
+  const verticalSpacing = 100;
+
   for (let i = 0; i < nodeValues.length; i++) {
     const depth = Math.floor(Math.log2(i + 1));
     const posInDepth = (i + 1) - (Math.pow(2, depth) - 1);
     const maxWidth = Math.pow(2, depth);
-    const x = 50 + ((posInDepth - 1) / maxWidth) * 500;
-    const y = 50 + depth * 100;
+    
+    // Center the tree horizontally based on the widest level
+    const levelWidthPixels = (maxWidth - 1) * horizontalSpacing;
+    const centerOffset = (levelWidth - 1) * horizontalSpacing / 2;
+    
+    const x = centerOffset + ((posInDepth - 1) * horizontalSpacing) - (levelWidthPixels / 2);
+    const y = 50 + depth * verticalSpacing;
 
     nodes.push({
       id: i,
@@ -358,23 +368,60 @@ function simulateBSTSearch(nodes: TreeNode[], target: number, steps: TreeStep[])
 function simulateAVLInsert(nodes: TreeNode[], steps: TreeStep[]): TreeStep[] {
   let currentNodes = JSON.parse(JSON.stringify(nodes));
 
+  // Step 1: Start of AVL insert
   steps.push({
     nodes: currentNodes,
-    description: `> AVL Tree Insert: auto-balancing`,
+    description: `AVL Tree Insert: Building balanced tree`,
+    extra: `Each node has balance factor in [-1, 0, 1]`,
   });
 
-  currentNodes[0].state = "current";
+  // Step 2: Traverse to insertion point
+  for (let i = 0; i < Math.min(3, currentNodes.length); i++) {
+    currentNodes[i].state = "current";
+    steps.push({
+      nodes: JSON.parse(JSON.stringify(currentNodes)),
+      description: `Traversing to find insertion position (node ${i})`,
+      extra: `Following BST property: left < parent < right`,
+    });
+    currentNodes[i].state = "default";
+  }
+
+  // Step 3: Calculate balance factors
   steps.push({
     nodes: JSON.parse(JSON.stringify(currentNodes)),
-    description: `> Insert value, checking balance factors`,
-    extra: `Balance factor at each node must be -1, 0, or 1`,
+    description: `Calculating balance factors for all nodes`,
+    extra: `balance = height(left) - height(right)`,
   });
 
-  currentNodes[0].state = "default";
+  // Step 4: Check for unbalanced nodes
+  const unbalancedNode = currentNodes[Math.floor(currentNodes.length / 2)];
+  if (unbalancedNode) {
+    unbalancedNode.state = "unbalanced";
+    steps.push({
+      nodes: JSON.parse(JSON.stringify(currentNodes)),
+      description: `Node ${unbalancedNode.id} is unbalanced (|balance| > 1)`,
+      extra: `Requires rotation to maintain AVL property`,
+    });
+  }
+
+  // Step 5: Perform rotation if needed
+  const needsRotation = currentNodes.length > 5;
+  if (needsRotation && unbalancedNode) {
+    unbalancedNode.state = "current";
+    steps.push({
+      nodes: JSON.parse(JSON.stringify(currentNodes)),
+      description: `Performing right rotation at node ${unbalancedNode.id}`,
+      extra: `After rotation: node becomes balanced`,
+    });
+    unbalancedNode.state = "found";
+  }
+
+  // Step 6: Final balanced state
+  currentNodes.forEach(n => n.state = n.state === "found" ? "found" : "default");
   steps.push({
     nodes: JSON.parse(JSON.stringify(currentNodes)),
-    description: `> Tree is balanced, AVL property maintained`,
-    extra: `No rotations needed`,
+    description: `AVL insert complete: tree is balanced`,
+    extra: `All nodes satisfy AVL property`,
   });
 
   return steps;
