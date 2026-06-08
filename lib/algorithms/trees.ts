@@ -2,9 +2,7 @@ import { TreeNode, TreeStep } from "./types";
 
 export function runTreeAlgo(algoId: string, nodeCount: number = 7): TreeStep[] {
   const steps: TreeStep[] = [];
-
-  // Create a sample binary tree
-  const tree = createSampleBinaryTree(nodeCount);
+  const tree = createSampleBinaryTree(Math.min(9, Math.max(1, nodeCount)));
 
   if (algoId === "tree-bfs") {
     return simulateBFS(tree, steps);
@@ -12,10 +10,12 @@ export function runTreeAlgo(algoId: string, nodeCount: number = 7): TreeStep[] {
     return simulateInorder(tree, steps);
   } else if (algoId === "tree-dfs-preorder") {
     return simulatePreorder(tree, steps);
+  } else if (algoId === "tree-dfs-postorder") {
+    return simulatePostorder(tree, steps);
   } else if (algoId === "bst-insert") {
     return simulateBSTInsert(tree, steps);
   } else if (algoId === "bst-search") {
-    return simulateBSTSearch(tree, 4, steps);
+    return simulateBSTSearch(tree, 5, steps);
   } else if (algoId === "avl-insert") {
     return simulateAVLInsert(tree, steps);
   }
@@ -27,19 +27,19 @@ function createSampleBinaryTree(count: number): TreeNode[] {
   const nodes: TreeNode[] = [];
   const nodeValues = [4, 2, 6, 1, 3, 5, 7, 8, 9].slice(0, Math.max(1, count));
 
-  // Layout in a binary tree pattern
   for (let i = 0; i < nodeValues.length; i++) {
     const depth = Math.floor(Math.log2(i + 1));
     const posInDepth = (i + 1) - (Math.pow(2, depth) - 1);
-    const x = 50 + (posInDepth - 1) * (600 / Math.pow(2, depth));
-    const y = 50 + depth * 80;
+    const maxWidth = Math.pow(2, depth);
+    const x = 50 + ((posInDepth - 1) / maxWidth) * 500;
+    const y = 50 + depth * 100;
 
     nodes.push({
       id: i,
       value: nodeValues[i],
       x,
       y,
-      children: getChildrenIds(i),
+      children: getChildrenIds(i, nodeValues.length),
       state: "default",
     });
   }
@@ -47,10 +47,10 @@ function createSampleBinaryTree(count: number): TreeNode[] {
   return nodes;
 }
 
-function getChildrenIds(nodeId: number): number[] {
+function getChildrenIds(nodeId: number, totalNodes: number): number[] {
   const left = 2 * nodeId + 1;
   const right = 2 * nodeId + 2;
-  return [left, right].filter((id) => id < 9);
+  return [left, right].filter((id) => id < totalNodes);
 }
 
 function simulateBFS(nodes: TreeNode[], steps: TreeStep[]): TreeStep[] {
@@ -59,42 +59,40 @@ function simulateBFS(nodes: TreeNode[], steps: TreeStep[]): TreeStep[] {
 
   steps.push({
     nodes: currentNodes,
-    description: `> Starting BFS (Level-Order Traversal)`,
+    description: `> BFS: Level-order traversal (queue-based)`,
     traversalOrder: [],
   });
 
-  const queue: number[] = [0]; // Start with root
-  const visited = new Set<number>();
+  const queue: number[] = [0];
+  const visited = new Set<number>([0]);
 
   while (queue.length > 0) {
     const nodeId = queue.shift()!;
-    if (visited.has(nodeId)) continue;
-    visited.add(nodeId);
-
     currentNodes[nodeId].state = "visiting";
+
     steps.push({
       nodes: JSON.parse(JSON.stringify(currentNodes)),
-      description: `> Visiting node ${currentNodes[nodeId].value}`,
-      extra: `Queue: [${queue.map((id) => currentNodes[id].value).join(", ")}]`,
+      description: `> Visit node ${currentNodes[nodeId].value}`,
+      extra: `Queue: [${queue.map((id) => currentNodes[id]?.value || "?").join(", ")}]`,
       traversalOrder: [...order, nodeId],
     });
 
     currentNodes[nodeId].state = "visited";
     order.push(nodeId);
 
-    // Add children to queue
     for (const childId of currentNodes[nodeId].children) {
       if (!visited.has(childId) && childId < currentNodes.length) {
+        visited.add(childId);
         queue.push(childId);
       }
     }
-
-    steps.push({
-      nodes: JSON.parse(JSON.stringify(currentNodes)),
-      description: `> Added children to queue`,
-      traversalOrder: order,
-    });
   }
+
+  steps.push({
+    nodes: currentNodes,
+    description: `> BFS complete: [${order.map((id) => currentNodes[id].value).join(", ")}]`,
+    traversalOrder: order,
+  });
 
   return steps;
 }
@@ -105,41 +103,43 @@ function simulateInorder(nodes: TreeNode[], steps: TreeStep[]): TreeStep[] {
 
   steps.push({
     nodes: currentNodes,
-    description: `> Starting In-Order Traversal (Left-Root-Right)`,
+    description: `> In-Order: Left → Root → Right (recursive DFS)`,
     traversalOrder: [],
   });
 
   function inorderDFS(nodeId: number) {
-    if (nodeId >= currentNodes.length) return;
+    if (nodeId >= currentNodes.length || nodeId === undefined) return;
 
-    const node = currentNodes[nodeId];
     const leftChild = 2 * nodeId + 1;
     const rightChild = 2 * nodeId + 2;
 
-    // Visit left
     if (leftChild < currentNodes.length) {
-      currentNodes[leftChild].state = "visiting";
       inorderDFS(leftChild);
     }
 
-    // Visit root
     currentNodes[nodeId].state = "current";
     steps.push({
       nodes: JSON.parse(JSON.stringify(currentNodes)),
-      description: `> Processing node ${node.value}`,
+      description: `> Process node ${currentNodes[nodeId].value}`,
       traversalOrder: [...order, nodeId],
     });
+
     currentNodes[nodeId].state = "visited";
     order.push(nodeId);
 
-    // Visit right
     if (rightChild < currentNodes.length) {
-      currentNodes[rightChild].state = "visiting";
       inorderDFS(rightChild);
     }
   }
 
   inorderDFS(0);
+
+  steps.push({
+    nodes: currentNodes,
+    description: `> In-Order complete: [${order.map((id) => currentNodes[id].value).join(", ")}]`,
+    traversalOrder: order,
+  });
+
   return steps;
 }
 
@@ -149,59 +149,110 @@ function simulatePreorder(nodes: TreeNode[], steps: TreeStep[]): TreeStep[] {
 
   steps.push({
     nodes: currentNodes,
-    description: `> Starting Pre-Order Traversal (Root-Left-Right)`,
+    description: `> Pre-Order: Root → Left → Right (recursive DFS)`,
     traversalOrder: [],
   });
 
   function preorderDFS(nodeId: number) {
-    if (nodeId >= currentNodes.length) return;
+    if (nodeId >= currentNodes.length || nodeId === undefined) return;
 
-    // Visit root
     currentNodes[nodeId].state = "current";
     steps.push({
       nodes: JSON.parse(JSON.stringify(currentNodes)),
-      description: `> Processing node ${currentNodes[nodeId].value}`,
+      description: `> Process node ${currentNodes[nodeId].value}`,
       traversalOrder: [...order, nodeId],
     });
+
     currentNodes[nodeId].state = "visited";
     order.push(nodeId);
 
     const leftChild = 2 * nodeId + 1;
     const rightChild = 2 * nodeId + 2;
 
-    // Visit left
     if (leftChild < currentNodes.length) {
-      currentNodes[leftChild].state = "visiting";
       preorderDFS(leftChild);
     }
 
-    // Visit right
     if (rightChild < currentNodes.length) {
-      currentNodes[rightChild].state = "visiting";
       preorderDFS(rightChild);
     }
   }
 
   preorderDFS(0);
+
+  steps.push({
+    nodes: currentNodes,
+    description: `> Pre-Order complete: [${order.map((id) => currentNodes[id].value).join(", ")}]`,
+    traversalOrder: order,
+  });
+
+  return steps;
+}
+
+function simulatePostorder(nodes: TreeNode[], steps: TreeStep[]): TreeStep[] {
+  let currentNodes = JSON.parse(JSON.stringify(nodes));
+  const order: number[] = [];
+
+  steps.push({
+    nodes: currentNodes,
+    description: `> Post-Order: Left → Right → Root (recursive DFS)`,
+    traversalOrder: [],
+  });
+
+  function postorderDFS(nodeId: number) {
+    if (nodeId >= currentNodes.length || nodeId === undefined) return;
+
+    const leftChild = 2 * nodeId + 1;
+    const rightChild = 2 * nodeId + 2;
+
+    if (leftChild < currentNodes.length) {
+      postorderDFS(leftChild);
+    }
+
+    if (rightChild < currentNodes.length) {
+      postorderDFS(rightChild);
+    }
+
+    currentNodes[nodeId].state = "current";
+    steps.push({
+      nodes: JSON.parse(JSON.stringify(currentNodes)),
+      description: `> Process node ${currentNodes[nodeId].value}`,
+      traversalOrder: [...order, nodeId],
+    });
+
+    currentNodes[nodeId].state = "visited";
+    order.push(nodeId);
+  }
+
+  postorderDFS(0);
+
+  steps.push({
+    nodes: currentNodes,
+    description: `> Post-Order complete: [${order.map((id) => currentNodes[id].value).join(", ")}]`,
+    traversalOrder: order,
+  });
+
   return steps;
 }
 
 function simulateBSTInsert(nodes: TreeNode[], steps: TreeStep[]): TreeStep[] {
   let currentNodes = JSON.parse(JSON.stringify(nodes));
-  const insertValue = 3.5;
+  const insertValue = 3;
 
   steps.push({
     nodes: currentNodes,
-    description: `> Inserting value ${insertValue} into BST`,
+    description: `> BST Insert: value ${insertValue}`,
   });
 
   let current = 0;
   for (let i = 0; i < 5; i++) {
+    if (current >= currentNodes.length) break;
+
     currentNodes[current].state = "current";
     steps.push({
       nodes: JSON.parse(JSON.stringify(currentNodes)),
-      description: `> Comparing ${insertValue} with node ${currentNodes[current].value}`,
-      extra: `Current node: ${currentNodes[current].value}`,
+      description: `> Compare ${insertValue} with ${currentNodes[current].value}`,
+      extra: `${insertValue < currentNodes[current].value ? "Go LEFT" : "Go RIGHT"}`,
     });
 
     const leftChild = 2 * current + 1;
@@ -211,10 +262,11 @@ function simulateBSTInsert(nodes: TreeNode[], steps: TreeStep[]): TreeStep[] {
       if (leftChild < currentNodes.length) {
         current = leftChild;
       } else {
+        currentNodes[current].state = "default";
         steps.push({
           nodes: JSON.parse(JSON.stringify(currentNodes)),
-          description: `> Inserted ${insertValue} as left child of ${currentNodes[current].value}`,
-          extra: `Insertion complete`,
+          description: `> Position found: insert ${insertValue} as LEFT child of ${currentNodes[current].value}`,
+          extra: `Insert complete`,
         });
         return steps;
       }
@@ -222,14 +274,16 @@ function simulateBSTInsert(nodes: TreeNode[], steps: TreeStep[]): TreeStep[] {
       if (rightChild < currentNodes.length) {
         current = rightChild;
       } else {
+        currentNodes[current].state = "default";
         steps.push({
           nodes: JSON.parse(JSON.stringify(currentNodes)),
-          description: `> Inserted ${insertValue} as right child of ${currentNodes[current].value}`,
-          extra: `Insertion complete`,
+          description: `> Position found: insert ${insertValue} as RIGHT child of ${currentNodes[current].value}`,
+          extra: `Insert complete`,
         });
         return steps;
       }
     }
+
     currentNodes[current].state = "default";
   }
 
@@ -241,15 +295,18 @@ function simulateBSTSearch(nodes: TreeNode[], target: number, steps: TreeStep[])
 
   steps.push({
     nodes: currentNodes,
-    description: `> Searching for value ${target} in BST`,
+    description: `> BST Search: find ${target}`,
   });
 
   let current = 0;
   for (let i = 0; i < 10; i++) {
+    if (current >= currentNodes.length) break;
+
     currentNodes[current].state = "current";
     steps.push({
       nodes: JSON.parse(JSON.stringify(currentNodes)),
-      description: `> Checking node ${currentNodes[current].value}`,
+      description: `> Check node ${currentNodes[current].value}`,
+      extra: target === currentNodes[current].value ? "FOUND!" : target < currentNodes[current].value ? "Search LEFT" : "Search RIGHT",
     });
 
     if (currentNodes[current].value === target) {
@@ -278,12 +335,13 @@ function simulateBSTSearch(nodes: TreeNode[], target: number, steps: TreeStep[])
         break;
       }
     }
+
     currentNodes[current].state = "default";
   }
 
   steps.push({
     nodes: currentNodes,
-    description: `> Value ${target} not found in BST`,
+    description: `> Value ${target} not found`,
     extra: `Search failed`,
   });
 
@@ -295,22 +353,21 @@ function simulateAVLInsert(nodes: TreeNode[], steps: TreeStep[]): TreeStep[] {
 
   steps.push({
     nodes: currentNodes,
-    description: `> Inserting into AVL tree with auto-balancing`,
+    description: `> AVL Tree Insert: auto-balancing`,
   });
 
-  // Simulate unbalanced insertion
   currentNodes[0].state = "current";
   steps.push({
     nodes: JSON.parse(JSON.stringify(currentNodes)),
-    description: `> Value inserted, checking balance factor`,
-    extra: `Balance factor at root: 0`,
+    description: `> Insert value, checking balance factors`,
+    extra: `Balance factor at each node must be -1, 0, or 1`,
   });
 
-  // Simulate rotation if needed
+  currentNodes[0].state = "default";
   steps.push({
     nodes: JSON.parse(JSON.stringify(currentNodes)),
-    description: `> Tree is balanced, no rotation needed`,
-    extra: `AVL property maintained`,
+    description: `> Tree is balanced, AVL property maintained`,
+    extra: `No rotations needed`,
   });
 
   return steps;

@@ -63,7 +63,10 @@ export default function ArrayGenerator({
           max={80}
           step={1}
           value={[arraySize]}
-          onValueChange={(vals) => onSizeChange(vals[0])}
+          onValueChange={(vals) => {
+            const newSize = Array.isArray(vals) && vals.length > 0 ? vals[0] : arraySize;
+            onSizeChange(newSize);
+          }}
           className="flex-1"
           aria-label="Array size"
         />

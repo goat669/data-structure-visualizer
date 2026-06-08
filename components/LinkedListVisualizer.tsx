@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { LinkedListNode, LinkedListStep } from "@/lib/algorithms/types";
-import { runLinkedListAlgo } from "@/lib/algorithms/linkedlist";
+import { runLinkedListAlgo, type LinkedListType } from "@/lib/algorithms/linkedlist";
 import PlaybackControls from "./PlaybackControls";
 import StatsPanel from "./StatsPanel";
 
@@ -12,8 +12,9 @@ interface LinkedListVisualizerProps {
 
 export default function LinkedListVisualizer({ algoId }: LinkedListVisualizerProps) {
   const [mounted, setMounted] = useState(false);
-  const [values, setValues] = useState<number[]>([5, 12, 3, 8, 15]);
-  const [position, setPosition] = useState(1);
+  const [llType, setLLType] = useState<LinkedListType>("singly");
+  const [values, setValues] = useState<number[]>([5, 12, 3, 8]);
+  const [searchVal, setSearchVal] = useState(12);
   const [steps, setSteps] = useState<LinkedListStep[]>([]);
   const [currentStep, setCurrentStep] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -23,14 +24,14 @@ export default function LinkedListVisualizer({ algoId }: LinkedListVisualizerPro
   useEffect(() => {
     setMounted(true);
     recompute();
-  }, [algoId]);
+  }, [algoId, llType]);
 
   const recompute = useCallback(() => {
     stopPlayback();
-    const s = runLinkedListAlgo(algoId, values, position);
+    const s = runLinkedListAlgo(algoId, values, searchVal, llType);
     setSteps(s);
     setCurrentStep(0);
-  }, [algoId, values, position]);
+  }, [algoId, values, searchVal, llType]);
 
   const stopPlayback = () => {
     setIsPlaying(false);
@@ -62,29 +63,51 @@ export default function LinkedListVisualizer({ algoId }: LinkedListVisualizerPro
   }, [isPlaying, currentStep, speed, steps.length]);
 
   if (!mounted) {
-    return <div className="animate-pulse space-y-4">{Array(5).fill(0).map((_, i) => <div key={i} className="h-20 bg-card rounded-lg" />)}</div>;
+    return <div className="animate-pulse space-y-4">{Array(5).fill(0).map((_, i) => <div key={i} className="h-16 bg-card rounded-lg" />)}</div>;
   }
 
   const currentData = steps[currentStep];
   const nodes = currentData?.nodes ?? [];
   const isFinished = currentStep >= steps.length - 1;
+  const algoName = algoId === "ll-insert" ? "Insert" : algoId === "ll-delete" ? "Delete" : algoId === "ll-reverse" ? "Reverse" : "Search";
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Info Panel */}
-      <div className="bg-card border border-border rounded-lg p-4">
-        <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest">Algorithm Info</span>
-        <div className="mt-2 space-y-1">
-          <p className="text-sm text-foreground">{algoId === "ll-insert" && "Insert a node at a position"}</p>
-          <p className="text-sm text-foreground">{algoId === "ll-delete" && "Delete a node at a position"}</p>
-          <p className="text-sm text-foreground">{algoId === "ll-reverse" && "Reverse the entire linked list"}</p>
-          <p className="text-sm text-foreground">{algoId === "ll-search" && "Search for a value in the list"}</p>
+      {/* Type Selector */}
+      <div className="bg-card border border-border rounded-lg p-4 space-y-3">
+        <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest">Linked List Type</span>
+        <div className="flex gap-2">
+          {(["singly", "doubly", "circular"] as LinkedListType[]).map((type) => (
+            <button
+              key={type}
+              onClick={() => setLLType(type)}
+              className={`px-3 py-2 rounded text-sm font-mono transition-all ${
+                llType === type
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-background border border-border text-foreground hover:border-primary"
+              }`}
+            >
+              {type.charAt(0).toUpperCase() + type.slice(1)}
+            </button>
+          ))}
         </div>
       </div>
 
+      {/* Info Panel */}
+      <div className="bg-card border border-border rounded-lg p-4 space-y-2">
+        <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest">{algoName} Operation</span>
+        <p className="text-sm text-foreground">
+          {algoId === "ll-insert" && "Insert a value into the linked list"}
+          {algoId === "ll-delete" && "Delete a node from the list"}
+          {algoId === "ll-reverse" && "Reverse the entire list by reversing all pointer directions"}
+          {algoId === "ll-search" && "Search for a value in the list"}
+        </p>
+        <p className="text-xs text-muted-foreground mt-2">Type: {llType === "singly" ? "Single direction only" : llType === "doubly" ? "Bidirectional pointers" : "Circular (loops back)"}</p>
+      </div>
+
       {/* Canvas */}
-      <div style={{ height: "300px", background: "#0a0a0a", border: "1px solid #1a1a1a", borderRadius: "6px", padding: "20px" }}>
-        <LinkedListCanvas nodes={nodes} />
+      <div style={{ height: "280px", background: "#0a0a0a", border: "1px solid #1a1a1a", borderRadius: "6px", padding: "20px" }} className="overflow-x-auto">
+        <LinkedListCanvas nodes={nodes} type={llType} />
       </div>
 
       {/* Stats */}
@@ -102,76 +125,111 @@ export default function LinkedListVisualizer({ algoId }: LinkedListVisualizerPro
       {/* Controls */}
       <PlaybackControls
         isPlaying={isPlaying}
-        onPlayPause={handlePlayPause}
-        onReset={() => { stopPlayback(); setCurrentStep(0); }}
-        onStepBack={() => { stopPlayback(); setCurrentStep(Math.max(0, currentStep - 1)); }}
-        onStepForward={() => { stopPlayback(); setCurrentStep(Math.min(steps.length - 1, currentStep + 1)); }}
+        isFinished={isFinished}
+        onPlay={() => setIsPlaying(true)}
+        onPause={stopPlayback}
+        onReset={() => {
+          stopPlayback();
+          setCurrentStep(0);
+        }}
+        onStepBack={() => {
+          stopPlayback();
+          setCurrentStep(Math.max(0, currentStep - 1));
+        }}
+        onStepForward={() => {
+          stopPlayback();
+          setCurrentStep(Math.min(steps.length - 1, currentStep + 1));
+        }}
         currentStep={currentStep}
         totalSteps={steps.length}
         speed={speed}
         onSpeedChange={setSpeed}
-        progress={(currentStep / Math.max(1, steps.length - 1)) * 100}
-        onProgressChange={(pct) => setCurrentStep(Math.round((pct / 100) * (steps.length - 1)))}
+        onSliderChange={(step) => setCurrentStep(step)}
       />
 
       {/* Input Panel */}
       <div className="bg-card border border-border rounded-lg p-4 space-y-3">
-        <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest">Modify List</span>
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={values.join(", ")}
-            onChange={(e) => {
-              const vals = e.target.value.split(",").map((v) => parseInt(v.trim())).filter((v) => !isNaN(v));
-              setValues(vals.length > 0 ? vals : []);
-            }}
-            placeholder="5, 12, 3, 8, 15"
-            className="flex-1 px-3 py-2 bg-background border border-border rounded text-sm font-mono"
-          />
-          <button onClick={recompute} className="px-4 py-2 bg-primary text-primary-foreground rounded text-sm font-mono">
-            Run
-          </button>
+        <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest">Configure List</span>
+        <div className="space-y-2">
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={values.join(", ")}
+              onChange={(e) => {
+                const vals = e.target.value.split(",").map((v) => parseInt(v.trim())).filter((v) => !isNaN(v));
+                setValues(vals.length > 0 ? vals : []);
+              }}
+              placeholder="e.g., 5, 12, 3, 8"
+              className="flex-1 px-3 py-2 bg-background border border-border rounded text-sm font-mono"
+            />
+            <button onClick={recompute} className="px-4 py-2 bg-primary text-primary-foreground rounded text-sm font-mono">
+              Run
+            </button>
+          </div>
+          {(algoId === "ll-search" || algoId === "ll-insert") && (
+            <input
+              type="number"
+              value={searchVal}
+              onChange={(e) => setSearchVal(parseInt(e.target.value) || 0)}
+              placeholder={algoId === "ll-search" ? "Search value" : "Insert value"}
+              className="w-full px-3 py-2 bg-background border border-border rounded text-sm font-mono"
+            />
+          )}
         </div>
       </div>
     </div>
   );
 }
 
-function LinkedListCanvas({ nodes }: { nodes: LinkedListNode[] }) {
-  return (
-    <div className="w-full h-full flex items-center gap-8 overflow-x-auto pb-4">
-      {nodes.map((node, idx) => {
-        const getColor = () => {
-          if (node.state === "found") return "#4ade80";
-          if (node.state === "current") return "#c8843a";
-          if (node.state === "highlight") return "#a855f7";
-          if (node.state === "deleted") return "#e05252";
-          if (node.state === "inserted") return "#4ade80";
-          if (node.state === "visited") return "#666";
-          return "#1a1a1a";
-        };
+function LinkedListCanvas({ nodes, type }: { nodes: LinkedListNode[]; type: LinkedListType }) {
+  const getColor = (state: string) => {
+    if (state === "found") return "#4ade80";
+    if (state === "current") return "#c8843a";
+    if (state === "highlight") return "#a855f7";
+    if (state === "deleted") return "#e05252";
+    if (state === "inserted") return "#4ade80";
+    if (state === "visited") return "#666";
+    return "#1a1a1a";
+  };
 
-        return (
-          <div key={idx} className="flex-shrink-0 flex flex-col items-center gap-2">
-            <div
-              className="w-16 h-16 flex items-center justify-center rounded border-2 text-lg font-bold"
-              style={{
-                background: getColor(),
-                borderColor: getColor(),
-                color: node.state === "visited" ? "#888" : "#fff",
-              }}
-            >
-              {node.value}
-            </div>
-            {idx < nodes.length - 1 && (
-              <div className="text-lg text-muted-foreground">→</div>
+  return (
+    <div className="w-full h-full flex items-center gap-4 overflow-x-auto">
+      {nodes.map((node, idx) => (
+        <div key={idx} className="flex-shrink-0 flex flex-col items-center gap-2">
+          {/* Node box */}
+          <div
+            className="w-14 h-14 flex items-center justify-center rounded border-2 text-sm font-bold transition-all"
+            style={{
+              background: getColor(node.state),
+              borderColor: getColor(node.state),
+              color: "#fff",
+            }}
+          >
+            {node.value}
+          </div>
+
+          {/* Arrow or links */}
+          <div className="text-xs text-muted-foreground">
+            {type === "doubly" && idx < nodes.length - 1 && (
+              <div className="text-center">⇄</div>
             )}
-            {idx === nodes.length - 1 && (
-              <div className="text-sm text-muted-foreground">null</div>
+            {type === "singly" && idx < nodes.length - 1 && (
+              <div className="text-center">→</div>
+            )}
+            {type === "circular" && idx === nodes.length - 1 && (
+              <div className="text-center">↻</div>
             )}
           </div>
-        );
-      })}
+        </div>
+      ))}
+
+      {/* End marker */}
+      {nodes.length > 0 && type === "singly" && (
+        <div className="flex-shrink-0 text-sm text-muted-foreground font-mono">null</div>
+      )}
+      {nodes.length > 0 && type === "doubly" && (
+        <div className="flex-shrink-0 text-sm text-muted-foreground font-mono">◀ null</div>
+      )}
       {nodes.length === 0 && (
         <div className="text-muted-foreground text-sm">Empty list</div>
       )}

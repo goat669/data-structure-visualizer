@@ -71,22 +71,33 @@ export default function TreeVisualizer({ algoId }: TreeVisualizerProps) {
   return (
     <div className="flex flex-col gap-4">
       {/* Info Panel */}
-      <div className="bg-card border border-border rounded-lg p-4">
-        <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest">Tree Traversal</span>
-        <div className="mt-2 space-y-1">
-          <p className="text-sm text-foreground">{algoId.includes("bfs") && "Level-order traversal using queue"}</p>
-          <p className="text-sm text-foreground">{algoId === "tree-dfs-inorder" && "In-order: Left → Root → Right"}</p>
-          <p className="text-sm text-foreground">{algoId === "tree-dfs-preorder" && "Pre-order: Root → Left → Right"}</p>
-          <p className="text-sm text-foreground">{algoId === "bst-insert" && "Insert value maintaining BST property"}</p>
-          <p className="text-sm text-foreground">{algoId === "bst-search" && "Search value in BST"}</p>
-          <p className="text-sm text-foreground">{algoId === "avl-insert" && "AVL tree auto-balancing on insert"}</p>
-        </div>
+      <div className="bg-card border border-border rounded-lg p-4 space-y-2">
+        <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest">Tree Operation</span>
+        <p className="text-sm text-foreground">
+          {algoId === "tree-bfs" && "Level-order traversal using a queue (BFS)"}
+          {algoId === "tree-dfs-inorder" && "In-Order: Visit Left → Root → Right (sorted output for BST)"}
+          {algoId === "tree-dfs-preorder" && "Pre-Order: Visit Root → Left → Right (copy tree structure)"}
+          {algoId === "tree-dfs-postorder" && "Post-Order: Visit Left → Right → Root (delete tree safely)"}
+          {algoId === "bst-insert" && "Insert value maintaining BST property (left < parent < right)"}
+          {algoId === "bst-search" && "Search for value in BST with efficient pruning"}
+          {algoId === "avl-insert" && "AVL tree insert with automatic rebalancing via rotations"}
+        </p>
       </div>
 
       {/* Canvas */}
-      <div style={{ height: "350px", background: "#0a0a0a", border: "1px solid #1a1a1a", borderRadius: "6px", padding: "20px" }}>
+      <div style={{ height: "360px", background: "#0a0a0a", border: "1px solid #1a1a1a", borderRadius: "6px", padding: "20px" }}>
         <TreeCanvas nodes={nodes} traversalOrder={currentData?.traversalOrder ?? []} />
       </div>
+
+      {/* Traversal Order */}
+      {currentData?.traversalOrder && currentData.traversalOrder.length > 0 && (
+        <div className="bg-card border border-border rounded-lg p-3">
+          <span className="text-[10px] font-mono text-muted-foreground uppercase">Traversal Order</span>
+          <p className="text-sm font-mono mt-1">
+            {currentData.traversalOrder.map((id) => nodes[id]?.value || "?").join(" → ")}
+          </p>
+        </div>
+      )}
 
       {/* Stats */}
       <StatsPanel
@@ -103,32 +114,35 @@ export default function TreeVisualizer({ algoId }: TreeVisualizerProps) {
       {/* Controls */}
       <PlaybackControls
         isPlaying={isPlaying}
-        onPlayPause={handlePlayPause}
-        onReset={() => { stopPlayback(); setCurrentStep(0); }}
-        onStepBack={() => { stopPlayback(); setCurrentStep(Math.max(0, currentStep - 1)); }}
-        onStepForward={() => { stopPlayback(); setCurrentStep(Math.min(steps.length - 1, currentStep + 1)); }}
+        isFinished={isFinished}
+        onPlay={() => setIsPlaying(true)}
+        onPause={stopPlayback}
+        onReset={() => {
+          stopPlayback();
+          setCurrentStep(0);
+        }}
+        onStepBack={() => {
+          stopPlayback();
+          setCurrentStep(Math.max(0, currentStep - 1));
+        }}
+        onStepForward={() => {
+          stopPlayback();
+          setCurrentStep(Math.min(steps.length - 1, currentStep + 1));
+        }}
         currentStep={currentStep}
         totalSteps={steps.length}
         speed={speed}
         onSpeedChange={setSpeed}
-        progress={(currentStep / Math.max(1, steps.length - 1)) * 100}
-        onProgressChange={(pct) => setCurrentStep(Math.round((pct / 100) * (steps.length - 1)))}
+        onSliderChange={(step) => setCurrentStep(step)}
       />
 
       {/* Node count */}
       <div className="bg-card border border-border rounded-lg p-4 space-y-3">
         <div className="flex items-center justify-between">
           <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest">Tree Size</span>
-          <span className="text-sm font-mono">{nodeCount} nodes</span>
+          <span className="text-sm font-mono text-primary">{nodeCount} nodes</span>
         </div>
-        <input
-          type="range"
-          min="1"
-          max="9"
-          value={nodeCount}
-          onChange={(e) => setNodeCount(parseInt(e.target.value))}
-          className="w-full"
-        />
+        <input type="range" min="1" max="9" value={nodeCount} onChange={(e) => setNodeCount(parseInt(e.target.value))} className="w-full cursor-pointer" />
       </div>
     </div>
   );
@@ -141,7 +155,7 @@ function TreeCanvas({ nodes, traversalOrder }: { nodes: TreeNode[]; traversalOrd
   const maxX = Math.max(...nodes.map((n) => n.x));
   const minY = Math.min(...nodes.map((n) => n.y));
   const maxY = Math.max(...nodes.map((n) => n.y));
-  const padding = 40;
+  const padding = 50;
   const width = maxX - minX + padding * 2;
   const height = maxY - minY + padding * 2;
 
@@ -155,7 +169,7 @@ function TreeCanvas({ nodes, traversalOrder }: { nodes: TreeNode[]; traversalOrd
   };
 
   return (
-    <svg width="100%" height="100%" viewBox={`0 0 ${width} ${height}`} className="w-full h-full">
+    <svg width="100%" height="100%" viewBox={`0 0 ${width} ${height}`} className="w-full h-full" preserveAspectRatio="xMidYMid meet">
       {/* Edges */}
       {nodes.map((node) =>
         node.children.map((childId) => {
@@ -170,42 +184,56 @@ function TreeCanvas({ nodes, traversalOrder }: { nodes: TreeNode[]; traversalOrd
               y2={child.y - minY + padding}
               stroke="#333"
               strokeWidth="2"
+              strokeDasharray={traversalOrder.includes(childId) ? "0" : "4"}
             />
           );
         })
       )}
 
       {/* Nodes */}
-      {nodes.map((node) => (
-        <g key={`node-${node.id}`}>
-          <circle
-            cx={node.x - minX + padding}
-            cy={node.y - minY + padding}
-            r="24"
-            fill={getColor(node.state)}
-            opacity={traversalOrder.includes(node.id) ? 1 : 0.6}
-          />
-          <text
-            x={node.x - minX + padding}
-            y={node.y - minY + padding}
-            textAnchor="middle"
-            dy="0.3em"
-            fill="#fff"
-            fontSize="14"
-            fontWeight="bold"
-            fontFamily="monospace"
-          >
-            {node.value}
-          </text>
-        </g>
-      ))}
+      {nodes.map((node) => {
+        const isInOrder = traversalOrder.includes(node.id);
+        const orderIndex = traversalOrder.indexOf(node.id) + 1;
 
-      {/* Traversal order indicator */}
-      {traversalOrder.length > 0 && (
-        <text x={10} y={20} fill="#666" fontSize="12" fontFamily="monospace">
-          Order: {traversalOrder.map((id) => nodes[id]?.value).join(" → ")}
-        </text>
-      )}
+        return (
+          <g key={`node-${node.id}`}>
+            <circle
+              cx={node.x - minX + padding}
+              cy={node.y - minY + padding}
+              r="26"
+              fill={getColor(node.state)}
+              opacity={isInOrder ? 1 : 0.5}
+              style={{ transition: "all 0.2s" }}
+            />
+            <text
+              x={node.x - minX + padding}
+              y={node.y - minY + padding}
+              textAnchor="middle"
+              dy="0.35em"
+              fill="#fff"
+              fontSize="16"
+              fontWeight="bold"
+              fontFamily="monospace"
+            >
+              {node.value}
+            </text>
+            {isInOrder && orderIndex > 0 && (
+              <text
+                x={node.x - minX + padding + 16}
+                y={node.y - minY + padding - 16}
+                textAnchor="middle"
+                fill="#4ade80"
+                fontSize="11"
+                fontWeight="bold"
+                fontFamily="monospace"
+                style={{ background: "#0a0a0a", padding: "2px 4px" }}
+              >
+                {orderIndex}
+              </text>
+            )}
+          </g>
+        );
+      })}
     </svg>
   );
 }

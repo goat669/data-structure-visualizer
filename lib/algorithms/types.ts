@@ -74,7 +74,7 @@ export interface LinkedListNode {
   value: number;
   x: number;
   y: number;
-  state: "default" | "current" | "highlight" | "deleted" | "inserted" | "found";
+  state: "default" | "current" | "highlight" | "deleted" | "inserted" | "found" | "visited";
   nextArrow?: "default" | "active" | "highlight";
 }
 
@@ -492,6 +492,183 @@ string infixToPostfix(string expr) {
 
   // ── Linked List ────────────────────────────────────────────────────────────
   {
+    id: "sll-insert",
+    name: "Singly LL - Insert",
+    category: "linked-list",
+    description: "Insert a new node in a singly linked list (forward pointers only).",
+    timeComplexity: { best: "O(1)", average: "O(n)", worst: "O(n)" },
+    spaceComplexity: "O(1)",
+    cppCode: `struct Node {
+  int data;
+  Node* next;
+  Node(int val) : data(val), next(nullptr) {}
+};
+
+Node* insertAtPos(Node* head, int val, int pos) {
+  Node* newNode = new Node(val);
+  if (pos == 0) {
+    newNode->next = head;
+    return newNode;
+  }
+  Node* curr = head;
+  for (int i = 0; i < pos - 1 && curr; i++)
+    curr = curr->next;
+  if (curr) {
+    newNode->next = curr->next;
+    curr->next = newNode;
+  }
+  return head;
+}`,
+  },
+  {
+    id: "sll-delete",
+    name: "Singly LL - Delete",
+    category: "linked-list",
+    description: "Delete a node from a singly linked list.",
+    timeComplexity: { best: "O(1)", average: "O(n)", worst: "O(n)" },
+    spaceComplexity: "O(1)",
+    cppCode: `Node* deleteAtPos(Node* head, int pos) {
+  if (pos == 0 && head) {
+    Node* temp = head;
+    head = head->next;
+    delete temp;
+    return head;
+  }
+  Node* curr = head;
+  for (int i = 0; i < pos - 1 && curr; i++)
+    curr = curr->next;
+  if (curr && curr->next) {
+    Node* temp = curr->next;
+    curr->next = temp->next;
+    delete temp;
+  }
+  return head;
+}`,
+  },
+  {
+    id: "dll-insert",
+    name: "Doubly LL - Insert",
+    category: "linked-list",
+    description: "Insert a node in a doubly linked list (both prev and next pointers).",
+    timeComplexity: { best: "O(1)", average: "O(n)", worst: "O(n)" },
+    spaceComplexity: "O(1)",
+    cppCode: `struct DNode {
+  int data;
+  DNode* next;
+  DNode* prev;
+  DNode(int val) : data(val), next(nullptr), prev(nullptr) {}
+};
+
+DNode* insertAtPos(DNode* head, int val, int pos) {
+  DNode* newNode = new DNode(val);
+  if (pos == 0) {
+    newNode->next = head;
+    if (head) head->prev = newNode;
+    return newNode;
+  }
+  DNode* curr = head;
+  for (int i = 0; i < pos - 1 && curr; i++)
+    curr = curr->next;
+  if (curr) {
+    newNode->next = curr->next;
+    newNode->prev = curr;
+    if (curr->next) curr->next->prev = newNode;
+    curr->next = newNode;
+  }
+  return head;
+}`,
+  },
+  {
+    id: "dll-delete",
+    name: "Doubly LL - Delete",
+    category: "linked-list",
+    description: "Delete a node from a doubly linked list.",
+    timeComplexity: { best: "O(1)", average: "O(n)", worst: "O(n)" },
+    spaceComplexity: "O(1)",
+    cppCode: `DNode* deleteAtPos(DNode* head, int pos) {
+  if (pos == 0 && head) {
+    DNode* temp = head;
+    head = head->next;
+    if (head) head->prev = nullptr;
+    delete temp;
+    return head;
+  }
+  DNode* curr = head;
+  for (int i = 0; i < pos - 1 && curr; i++)
+    curr = curr->next;
+  if (curr && curr->next) {
+    DNode* temp = curr->next;
+    curr->next = temp->next;
+    if (temp->next) temp->next->prev = curr;
+    delete temp;
+  }
+  return head;
+}`,
+  },
+  {
+    id: "cll-insert",
+    name: "Circular LL - Insert",
+    category: "linked-list",
+    description: "Insert a node in a circular linked list (last node points to first).",
+    timeComplexity: { best: "O(1)", average: "O(n)", worst: "O(n)" },
+    spaceComplexity: "O(1)",
+    cppCode: `Node* insertAtPos(Node* head, int val, int pos) {
+  Node* newNode = new Node(val);
+  if (!head) {
+    newNode->next = newNode; // Point to itself
+    return newNode;
+  }
+  if (pos == 0) {
+    Node* tail = head;
+    while (tail->next != head) tail = tail->next;
+    newNode->next = head;
+    tail->next = newNode;
+    return newNode;
+  }
+  Node* curr = head;
+  for (int i = 0; i < pos - 1; i++) {
+    curr = curr->next;
+    if (curr == head) break;
+  }
+  newNode->next = curr->next;
+  curr->next = newNode;
+  return head;
+}`,
+  },
+  {
+    id: "cll-delete",
+    name: "Circular LL - Delete",
+    category: "linked-list",
+    description: "Delete a node from a circular linked list.",
+    timeComplexity: { best: "O(1)", average: "O(n)", worst: "O(n)" },
+    spaceComplexity: "O(1)",
+    cppCode: `Node* deleteAtPos(Node* head, int pos) {
+  if (!head || head->next == head) return nullptr;
+  if (pos == 0) {
+    Node* tail = head;
+    while (tail->next != head) tail = tail->next;
+    Node* temp = head;
+    head = head->next;
+    tail->next = head;
+    delete temp;
+    return head;
+  }
+  Node* curr = head;
+  for (int i = 0; i < pos - 1; i++) {
+    curr = curr->next;
+    if (curr->next == head) break;
+  }
+  if (curr->next != head) {
+    Node* temp = curr->next;
+    curr->next = temp->next;
+    delete temp;
+  }
+  return head;
+}`,
+  },
+
+  // ── Linked List ────────────────────────────────────────────────────────────
+  {
     id: "ll-insert",
     name: "Insert Node",
     category: "linked-list",
@@ -667,6 +844,21 @@ public:
   result.push_back(root->val);
   preorder(root->left, result);
   preorder(root->right, result);
+  return result;
+}`,
+  },
+  {
+    id: "tree-dfs-postorder",
+    name: "Post-Order Traversal (DFS)",
+    category: "tree",
+    description: "Traverse tree in left-right-root order. Visit children before parent.",
+    timeComplexity: { best: "O(n)", average: "O(n)", worst: "O(n)" },
+    spaceComplexity: "O(h)",
+    cppCode: `vector<int> postorder(TreeNode* root, vector<int>& result) {
+  if (!root) return result;
+  postorder(root->left, result);
+  postorder(root->right, result);
+  result.push_back(root->val);
   return result;
 }`,
   },
