@@ -26,18 +26,14 @@ export default function LinkedListVisualizer({
   const [currentStep, setCurrentStep] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [speed, setSpeed] = useState(1);
-  const [offsetX, setOffsetX] = useState(0);
-  const [offsetY, setOffsetY] = useState(0);
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const animationRef = useRef<number>();
 
   // Configuration
-  const [listSize, setListSize] = useState(8);
+  const [listSize, setListSize] = useState(7);
   const [position, setPosition] = useState(2);
   const [insertValue, setInsertValue] = useState(20);
   const [searchValue, setSearchValue] = useState(15);
-  const [customValues, setCustomValues] = useState<string>("10,20,30,40,50,60,70,80,90,100");
+  const [customValues, setCustomValues] = useState<string>("10,20,30,40,50,60,70");
   const [useCustom, setUseCustom] = useState(false);
 
   // Generate initial random values or parse custom values
@@ -47,7 +43,7 @@ export default function LinkedListVisualizer({
         .split(",")
         .map((v) => parseInt(v.trim()))
         .filter((v) => !isNaN(v))
-        .slice(0, 30);
+        .slice(0, 20);
     }
     return Array.from({ length: listSize }, () =>
       Math.floor(Math.random() * 100) + 1
@@ -116,10 +112,6 @@ export default function LinkedListVisualizer({
     // Background
     ctx.fillStyle = "#f8f9fa";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    // Apply transformation for panning
-    ctx.save();
-    ctx.translate(offsetX, offsetY);
 
     const nodeRadius = 35;
     const nodeSpacing = 80;
@@ -215,7 +207,6 @@ export default function LinkedListVisualizer({
     }
 
     // Draw circular arrow
-    // Draw circular loop (tail -> head)
     if (llType === "circular" && step.nodes.length > 1) {
       const lastNode = step.nodes[step.nodes.length - 1];
       const firstNode = step.nodes[0];
@@ -223,40 +214,18 @@ export default function LinkedListVisualizer({
       ctx.strokeStyle = "#10b981";
       ctx.lineWidth = 2.5;
       ctx.beginPath();
-      
-      // Start from bottom right of last node
-      ctx.moveTo(lastNode.x + nodeRadius + 5, lastNode.y + 5);
-      
-      // Create smooth curve going down then back to head
-      const bottomY = lastNode.y + 80;
-      const controlX1 = lastNode.x + 100;
-      const controlX2 = firstNode.x - 100;
-      
-      // Bezier curve: starts at tail, goes down and curves around to head from below
-      ctx.bezierCurveTo(
-        controlX1, lastNode.y + 30,  // First control point (right side, slight down)
-        controlX1, bottomY,            // Second control point (right side, at bottom)
-        (lastNode.x + firstNode.x) / 2, bottomY  // Middle point at bottom
-      );
-      
-      ctx.bezierCurveTo(
-        controlX2, bottomY,            // Control point (left side, at bottom)
-        controlX2, firstNode.y + 30,  // Control point (left side, moving up)
-        firstNode.x, firstNode.y + nodeRadius + 12  // End point at head bottom
-      );
-      
+      const controlX = (lastNode.x + firstNode.x) / 2;
+      const controlY = lastNode.y + 80;
+      ctx.quadraticCurveTo(controlX, controlY, firstNode.x, firstNode.y - nodeRadius - 15);
       ctx.stroke();
 
-      // Arrow head pointing upward into HEAD node
-      const endX = firstNode.x;
-      const endY = firstNode.y + nodeRadius + 12;
-      const arrowSize = 10;
-      
+      // Arrow head
+      const angle = Math.atan2((firstNode.y - nodeRadius - 15) - controlY, firstNode.x - controlX);
       ctx.fillStyle = "#10b981";
       ctx.beginPath();
-      ctx.moveTo(endX, endY);
-      ctx.lineTo(endX - arrowSize * 0.866, endY - arrowSize * 0.5);  // Left point
-      ctx.lineTo(endX + arrowSize * 0.866, endY - arrowSize * 0.5);  // Right point
+      ctx.moveTo(firstNode.x, firstNode.y - nodeRadius - 15);
+      ctx.lineTo(firstNode.x - 10 * Math.cos(angle - Math.PI / 6), (firstNode.y - nodeRadius - 15) - 10 * Math.sin(angle - Math.PI / 6));
+      ctx.lineTo(firstNode.x - 10 * Math.cos(angle + Math.PI / 6), (firstNode.y - nodeRadius - 15) - 10 * Math.sin(angle + Math.PI / 6));
       ctx.closePath();
       ctx.fill();
     }
@@ -273,57 +242,15 @@ export default function LinkedListVisualizer({
     ctx.fillStyle = "#6b7280";
     ctx.fillText(step.detail, 30, 38);
 
-    ctx.restore();
-  }, [mounted, steps, currentStep, llType, offsetX, offsetY]);
-
-  // Mouse handlers for panning
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const handleMouseDown = (e: MouseEvent) => {
-      setIsDragging(true);
-      setDragStart({ x: e.clientX - offsetX, y: e.clientY - offsetY });
-      canvas.style.cursor = "grab";
-    };
-
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!isDragging) return;
-      setOffsetX(e.clientX - dragStart.x);
-      setOffsetY(e.clientY - dragStart.y);
-      canvas.style.cursor = "grabbing";
-    };
-
-    const handleMouseUp = () => {
-      setIsDragging(false);
-      canvas.style.cursor = "grab";
-    };
-
-    const handleWheel = (e: WheelEvent) => {
-      e.preventDefault();
-      setOffsetY(offsetY + e.deltaY);
-    };
-
-    canvas.addEventListener("mousedown", handleMouseDown);
-    window.addEventListener("mousemove", handleMouseMove);
-    window.addEventListener("mouseup", handleMouseUp);
-    canvas.addEventListener("wheel", handleWheel, { passive: false });
-
-    return () => {
-      canvas.removeEventListener("mousedown", handleMouseDown);
-      window.removeEventListener("mousemove", handleMouseMove);
-      window.removeEventListener("mouseup", handleMouseUp);
-      canvas.removeEventListener("wheel", handleWheel);
-    };
-  }, [isDragging, dragStart, offsetX, offsetY]);
+  }, [mounted, steps, currentStep, llType]);
 
   if (!mounted) return null;
 
   return (
     <div className="space-y-4">
       {/* Configuration */}
-      <div className="bg-gradient-to-r from-card to-card/50 border border-border/50 rounded-xl p-5 space-y-4 shadow-lg">
-        <h3 className="text-sm font-mono font-bold uppercase text-foreground tracking-wider">
+      <div className="bg-card border border-border rounded-lg p-4 space-y-4">
+        <h3 className="text-sm font-mono font-bold uppercase text-foreground">
           {llType.toUpperCase()} - {operation.toUpperCase()}
         </h3>
 
@@ -374,7 +301,7 @@ export default function LinkedListVisualizer({
             <input
               type="range"
               min="3"
-              max="15"
+              max="10"
               value={listSize}
               onChange={(e) => setListSize(parseInt(e.target.value))}
               className="w-full"
@@ -451,15 +378,12 @@ export default function LinkedListVisualizer({
       {/* Canvas Visualization */}
       {steps.length > 0 && (
         <>
-          <div className="relative bg-gradient-to-br from-slate-900 to-slate-950 rounded-xl border border-border/50 overflow-hidden shadow-2xl hover:shadow-xl transition-shadow duration-300">
-            <canvas
-              ref={canvasRef}
-              width={800}
-              height={400}
-              className="w-full"
-              style={{ cursor: isDragging ? "grabbing" : "grab" }}
-            />
-          </div>
+          <canvas
+            ref={canvasRef}
+            width={800}
+            height={400}
+            className="w-full border border-border rounded-lg bg-background"
+          />
 
           {/* Stats and Controls */}
           <div className="space-y-3">

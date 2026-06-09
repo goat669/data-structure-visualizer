@@ -29,7 +29,7 @@ function VisualizerRouter({ algoId }: { algoId: string }) {
     const operation = (parts[1] || "insert") as "insert" | "delete" | "search" | "reverse";
     return <LinkedListVisualizer key={algoId} llType={type} operation={operation} />;
   }
-  if (algo.category === "tree") {
+  if (algo.category === "tree" || algo.category === "binary-tree") {
     return <TreeVisualizer key={algoId} algoId={algoId} />;
   }
   if (algo.category === "stack" || algo.category === "queue") {

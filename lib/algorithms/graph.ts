@@ -242,7 +242,7 @@ export function dijkstraSteps(
   return steps;
 }
 
-// ─── Bellman-Ford ────────────────────────────────────────────────────────────
+// ─── Bellman-Ford ──────────────────────────────────────────────────────────────
 
 export function bellmanFordSteps(
   customNodes?: GraphNode[],
@@ -258,58 +258,74 @@ export function bellmanFordSteps(
   const steps: GraphStep[] = [];
   const n = nodes.length;
   const dist = Array(n).fill(Infinity);
+
+  const fmt = () => `dist: [${dist.map((d, i) => `${nodes[i].label}:${d === Infinity ? "∞" : d}`).join(" ")}]`;
+
+  // Build a directed list of relaxation candidates. Undirected edges relax both ways.
+  type Relax = { u: number; v: number; weight: number; edgeIdx: number };
+  const relaxList: Relax[] = [];
+  edges.forEach((e, edgeIdx) => {
+    const w = e.weight ?? 1;
+    relaxList.push({ u: e.from, v: e.to, weight: w, edgeIdx });
+    if (!e.directed) relaxList.push({ u: e.to, v: e.from, weight: w, edgeIdx });
+  });
+
   dist[src] = 0;
-  
-  steps.push(snap(nodes, edges, `Init Bellman-Ford from ${nodes[src].label}. dist[${nodes[src].label}]=0`, `dist: [${dist.map((d, i) => `${nodes[i].label}:${d === Infinity ? "∞" : d}`).join(" ")}]`));
+  nodes[src].state = "current";
+  steps.push(snap(nodes, edges, `Init Bellman-Ford from ${nodes[src].label}. dist[${nodes[src].label}]=0, all others ∞`, fmt()));
+  nodes[src].state = "visited";
 
   // Relax all edges V-1 times
-  for (let iter = 0; iter < n - 1; iter++) {
-    let anyRelaxed = false;
-    steps.push(snap(nodes, edges, `Iteration ${iter + 1}: Relaxing all edges`, `dist: [${dist.map((d, i) => `${nodes[i].label}:${d === Infinity ? "∞" : d}`).join(" ")}]`));
-    
-    for (let u = 0; u < n; u++) {
-      if (dist[u] === Infinity) continue;
-      nodes[u].state = "current";
-      
-      for (const { id: v, edgeIdx, weight } of getNeighbours(edges, u)) {
-        edges[edgeIdx].state = "active";
-        const newDist = dist[u] + weight;
-        
-        if (newDist < dist[v]) {
-          dist[v] = newDist;
-          nodes[v].state = "queued";
-          edges[edgeIdx].state = "path";
-          anyRelaxed = true;
-          steps.push(snap(nodes, edges, `Relax edge ${nodes[u].label}→${nodes[v].label}: dist[${nodes[v].label}]=${newDist}`, `dist: [${dist.map((d, i) => `${nodes[i].label}:${d === Infinity ? "∞" : d}`).join(" ")}]`));
-        } else {
-          edges[edgeIdx].state = "rejected";
-        }
-      }
-      nodes[u].state = "visited";
-    }
-    
-    if (!anyRelaxed) break;
-  }
+  for (let pass = 1; pass <= n - 1; pass++) {
+    let changedThisPass = false;
+    steps.push(snap(nodes, edges, `Pass ${pass} of ${n - 1}: relax every edge`, fmt()));
 
-  // Check for negative cycles
-  let negCycleFound = false;
-  for (let u = 0; u < n; u++) {
-    if (dist[u] === Infinity) continue;
-    for (const { id: v, edgeIdx, weight } of getNeighbours(edges, u)) {
-      if (dist[u] + weight < dist[v]) {
-        nodes[v].state = "unbalanced";
+    for (const { u, v, weight, edgeIdx } of relaxList) {
+      // reset transient edge states from previous relax
+      edges.forEach(e => { if (e.state === "active") e.state = "default"; });
+      edges[edgeIdx].state = "active";
+
+      if (dist[u] !== Infinity && dist[u] + weight < dist[v]) {
+        dist[v] = dist[u] + weight;
+        changedThisPass = true;
+        nodes[v].state = "queued";
+        steps.push(snap(nodes, edges, `Relax ${nodes[u].label}→${nodes[v].label} (w=${weight}): dist[${nodes[v].label}]=${dist[v]}`, fmt()));
+        edges[edgeIdx].state = "path";
+      } else if (dist[u] === Infinity) {
         edges[edgeIdx].state = "rejected";
-        negCycleFound = true;
+        steps.push(snap(nodes, edges, `Skip ${nodes[u].label}→${nodes[v].label}: ${nodes[u].label} still unreachable (∞)`, fmt()));
+      } else {
+        edges[edgeIdx].state = "rejected";
+        steps.push(snap(nodes, edges, `${nodes[u].label}→${nodes[v].label} (w=${weight}) not shorter — no update`, fmt()));
       }
+    }
+
+    edges.forEach(e => { if (e.state === "active") e.state = "default"; });
+    if (!changedThisPass) {
+      steps.push(snap(nodes, edges, `No distances changed in pass ${pass} — distances have converged, stop early`, fmt()));
+      break;
     }
   }
 
-  if (negCycleFound) {
-    steps.push(snap(nodes, edges, "⚠ Negative cycle detected!", `Cannot find shortest paths with negative cycles`));
-  } else {
-    steps.push(snap(nodes, edges, "Bellman-Ford complete — shortest paths found", `dist: [${dist.map((d, i) => `${nodes[i].label}:${d === Infinity ? "∞" : d}`).join(" ")}]`));
+  // Extra pass to detect negative-weight cycles
+  steps.push(snap(nodes, edges, "Verification pass: if any edge can still relax, a negative-weight cycle exists", fmt()));
+  let negativeCycle = false;
+  for (const { u, v, weight, edgeIdx } of relaxList) {
+    if (dist[u] !== Infinity && dist[u] + weight < dist[v]) {
+      negativeCycle = true;
+      edges[edgeIdx].state = "rejected";
+      nodes[u].state = "current";
+      nodes[v].state = "current";
+      steps.push(snap(nodes, edges, `Edge ${nodes[u].label}→${nodes[v].label} still relaxes — NEGATIVE CYCLE detected!`, `Negative cycle reachable from ${nodes[src].label}`));
+      break;
+    }
   }
-  
+
+  if (!negativeCycle) {
+    nodes.forEach((nd, i) => { nd.state = dist[i] === Infinity ? "default" : "visited"; });
+    steps.push(snap(nodes, edges, "Bellman-Ford complete — shortest paths found (handles negative weights)", fmt()));
+  }
+
   return steps;
 }
 

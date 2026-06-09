@@ -19,12 +19,7 @@ export default function TreeVisualizer({ algoId }: TreeVisualizerProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [speed, setSpeed] = useState(2);
-  const [offsetX, setOffsetX] = useState(0);
-  const [offsetY, setOffsetY] = useState(0);
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const svgRef = useRef<SVGSVGElement>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -92,45 +87,8 @@ export default function TreeVisualizer({ algoId }: TreeVisualizerProps) {
       </div>
 
       {/* Canvas */}
-      <div 
-        style={{ 
-          height: "360px", 
-          background: "#0a0a0a", 
-          border: "1px solid #1a1a1a", 
-          borderRadius: "6px", 
-          overflow: isPlaying ? "hidden" : "auto",
-          position: "relative"
-        }}
-        onMouseDown={(e) => {
-          if (isPlaying) return;
-          setIsDragging(true);
-          setDragStart({ x: e.clientX - offsetX, y: e.clientY - offsetY });
-        }}
-        onMouseMove={(e) => {
-          if (!isDragging || isPlaying) return;
-          setOffsetX(e.clientX - dragStart.x);
-          setOffsetY(e.clientY - dragStart.y);
-        }}
-        onMouseUp={() => setIsDragging(false)}
-        onMouseLeave={() => setIsDragging(false)}
-        onWheel={(e) => {
-          if (isPlaying) {
-            e.preventDefault();
-            return;
-          }
-          e.preventDefault();
-          setOffsetY(offsetY + e.deltaY);
-        }}
-      >
-        <div style={{ padding: "20px", transform: `translate(${offsetX}px, ${offsetY}px)` }}>
-          <TreeCanvas 
-            nodes={nodes} 
-            traversalOrder={currentData?.traversalOrder ?? []}
-            offsetX={offsetX}
-            offsetY={offsetY}
-            isDragging={isDragging}
-          />
-        </div>
+      <div style={{ height: "360px", background: "#0a0a0a", border: "1px solid #1a1a1a", borderRadius: "6px", padding: "20px" }}>
+        <TreeCanvas nodes={nodes} traversalOrder={currentData?.traversalOrder ?? []} />
       </div>
 
       {/* Traversal Order */}
@@ -193,21 +151,7 @@ export default function TreeVisualizer({ algoId }: TreeVisualizerProps) {
   );
 }
 
-function TreeCanvas({ 
-  nodes, 
-  traversalOrder,
-  offsetX = 0,
-  offsetY = 0,
-  onMouseDown,
-  isDragging,
-}: { 
-  nodes: TreeNode[]; 
-  traversalOrder: number[];
-  offsetX?: number;
-  offsetY?: number;
-  onMouseDown?: (e: React.MouseEvent<SVGSVGElement>) => void;
-  isDragging?: boolean;
-}) {
+function TreeCanvas({ nodes, traversalOrder }: { nodes: TreeNode[]; traversalOrder: number[] }) {
   if (nodes.length === 0) return <div className="text-muted-foreground text-sm">No tree data</div>;
 
   const minX = Math.min(...nodes.map((n) => n.x));
@@ -228,18 +172,7 @@ function TreeCanvas({
   };
 
   return (
-    <svg 
-      width="100%" 
-      height="100%" 
-      viewBox={`0 0 ${width} ${height}`} 
-      className="w-full h-full" 
-      preserveAspectRatio="xMidYMid meet"
-      onMouseDown={onMouseDown}
-      style={{ 
-        cursor: isDragging ? "grabbing" : "grab",
-        transform: `translate(${offsetX}px, ${offsetY}px)`,
-      }}
-    >
+    <svg width="100%" height="100%" viewBox={`0 0 ${width} ${height}`} className="w-full h-full" preserveAspectRatio="xMidYMid meet">
       {/* Edges */}
       {nodes.map((node) =>
         node.children.map((childId) => {

@@ -19,6 +19,7 @@ interface Props {
 
 const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 const needsWeight = (id: string) => ["dijkstra", "prim", "bellman-ford"].includes(id);
+const allowsNegative = (id: string) => id === "bellman-ford";
 const isDirected  = (id: string) => id === "topo";
 
 export default function GraphEditor({ config, algoId, onChange, onRun }: Props) {
@@ -28,6 +29,7 @@ export default function GraphEditor({ config, algoId, onChange, onRun }: Props) 
   const [error,      setError]      = useState("");
 
   const withWeight = needsWeight(algoId);
+  const negativeOk = allowsNegative(algoId);
   const directed   = isDirected(algoId);
 
   // ─── Nodes ────────────────────────────────────────────────────────────────
@@ -67,7 +69,8 @@ export default function GraphEditor({ config, algoId, onChange, onRun }: Props) 
   function addEdge() {
     const from = parseInt(edgeFrom, 10);
     const to   = parseInt(edgeTo,   10);
-    const w    = parseInt(edgeWeight, 10) || 1;
+    const parsedW = parseInt(edgeWeight, 10);
+    const w    = isNaN(parsedW) ? 1 : parsedW;
 
     if (isNaN(from) || isNaN(to)) { setError("Select valid nodes."); return; }
     if (from === to)              { setError("Cannot connect a node to itself."); return; }
@@ -86,12 +89,6 @@ export default function GraphEditor({ config, algoId, onChange, onRun }: Props) 
   function removeEdge(idx: number) {
     onChange({ ...config, edges: config.edges.filter((_, i) => i !== idx) });
     setError("");
-  }
-
-  function updateEdgeWeight(idx: number, newWeight: number) {
-    const newEdges = [...config.edges];
-    newEdges[idx] = { ...newEdges[idx], weight: newWeight };
-    onChange({ ...config, edges: newEdges });
   }
 
   function setStart(id: number) {
@@ -196,7 +193,7 @@ export default function GraphEditor({ config, algoId, onChange, onRun }: Props) 
             <div className="flex flex-col gap-1" style={{ minWidth: 60 }}>
               <label style={{ ...labelStyle, marginBottom: 0 }}>Weight</label>
               <input
-                type="number" min={1} max={99} value={edgeWeight}
+                type="number" min={negativeOk ? -99 : 1} max={99} value={edgeWeight}
                 onChange={e => setEdgeWeight(e.target.value)}
                 style={{ ...inputStyle, width: 60 }}
               />
@@ -224,27 +221,8 @@ export default function GraphEditor({ config, algoId, onChange, onRun }: Props) 
                   {config.nodes[e.from]?.label ?? e.from}
                   {directed ? " → " : " — "}
                   {config.nodes[e.to]?.label ?? e.to}
+                  {withWeight && e.weight !== undefined ? ` (${e.weight})` : ""}
                 </span>
-                {withWeight && e.weight !== undefined && (
-                  <div className="flex items-center gap-1">
-                    <span style={{ fontFamily: "monospace", fontSize: 11, color: "#888" }}>(</span>
-                    <input
-                      type="number"
-                      min={1}
-                      max={99}
-                      value={e.weight}
-                      onChange={(ev) => updateEdgeWeight(i, parseInt(ev.target.value, 10) || 1)}
-                      style={{
-                        ...inputStyle,
-                        width: 35,
-                        padding: "2px 4px",
-                        fontSize: 10
-                      }}
-                      title="Click to adjust edge weight"
-                    />
-                    <span style={{ fontFamily: "monospace", fontSize: 11, color: "#888" }}>)</span>
-                  </div>
-                )}
                 <button
                   onClick={() => removeEdge(i)}
                   style={{ background: "none", border: "none", color: "#555", cursor: "pointer", fontSize: 13, padding: "0 0 0 4px", lineHeight: 1 }}
